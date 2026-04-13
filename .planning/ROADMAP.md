@@ -26,7 +26,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. `npx create-next-app` output is committed and pushed to GitHub
   2. Vercel project is linked to the GitHub repo and a deploy triggers automatically on push
   3. A live public Vercel URL loads without errors in the browser
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold Next.js 15 with .git workaround, push to GitHub, connect Vercel via dashboard, verify auto-deploy and live URL
 
 ### Phase 2: Landing Page
 **Goal**: Visitors see a complete, dark-themed landing page with the site's identity
@@ -60,6 +62,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/1 | Not started | - |
 | 2. Landing Page | 0/? | Not started | - |
 | 3. Project Catalog | 0/? | Not started | - |
