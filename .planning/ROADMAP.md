@@ -12,7 +12,7 @@ Three phases deliver a live, minimal dark personal site with a working project c
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Scaffold Next.js project, wire GitHub to Vercel, verify live deploy
+- [x] **Phase 1: Foundation** - Scaffold Next.js project, wire GitHub to Vercel, verify live deploy
 - [ ] **Phase 2: Landing Page** - Build dark visual identity, header, blurb, and favicon
 - [ ] **Phase 3: Project Catalog** - Add catalog section and integrate math flash card game
 
@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A live public Vercel URL loads without errors in the browser
 **Plans:** 1 plan
 Plans:
-- [ ] 01-01-PLAN.md — Scaffold Next.js 15 with .git workaround, push to GitHub, connect Vercel via dashboard, verify auto-deploy and live URL
+- [x] 01-01-PLAN.md — Scaffold Next.js 15 with .git workaround, push to GitHub, connect Vercel via dashboard, verify auto-deploy and live URL
 
 ### Phase 2: Landing Page
 **Goal**: Visitors see a complete, dark-themed landing page with the site's identity
@@ -62,6 +62,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/1 | Not started | - |
+| 1. Foundation | 1/1 | Complete | 2026-04-13 |
 | 2. Landing Page | 0/? | Not started | - |
 | 3. Project Catalog | 0/? | Not started | - |
