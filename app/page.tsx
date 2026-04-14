@@ -6,8 +6,7 @@ export default function Home() {
           the shadow realm
         </h1>
         <p className="text-[#ededed]/60 text-sm tracking-wide">
-          {/* Blurb placeholder — finalized in plan 02-02 after checkpoint */}
-          a place for things to land.
+          somewhere to put things. more eventually.
         </p>
       </div>
     </main>
