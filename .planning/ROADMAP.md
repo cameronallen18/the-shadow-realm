@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Scaffold Next.js project, wire GitHub to Vercel, verify live deploy
 - [x] **Phase 2: Landing Page** - Build dark visual identity, header, blurb, and favicon
-- [ ] **Phase 3: Project Catalog** - Add catalog section and integrate math flash card game
+- [x] **Phase 3: Project Catalog** - Add catalog section and integrate math flash card game (completed 2026-04-15)
 
 ## Phase Details
 
@@ -54,10 +54,10 @@ Plans:
   2. The catalog section contains a link/card pointing to the math flash card game
   3. The math flash card game is playable at `/projects/math-flashcards` without errors
   4. The game page loads the owner-provided HTML/JS correctly (via iframe or adapted integration)
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 03-01-PLAN.md — Create lib/projects.ts typed data structure and render catalog section on landing page
-- [ ] 03-02-PLAN.md — Convert owner-provided HTML/JS flash card source to React page at /projects/math-flashcards
+- [x] 03-01-PLAN.md — Create lib/projects.ts typed data structure and render catalog section on landing page
+- [x] 03-02-PLAN.md — Convert owner-provided HTML/JS flash card source to React page at /projects/math-flashcards
 
 ## Progress
 
@@ -68,4 +68,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/1 | Complete | 2026-04-13 |
 | 2. Landing Page | 2/2 | Complete | 2026-04-14 |
-| 3. Project Catalog | 0/2 | Not started | - |
+| 3. Project Catalog | 2/2 | Complete   | 2026-04-15 |

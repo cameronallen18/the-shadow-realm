@@ -26,8 +26,8 @@
 ### Project Catalog
 
 - [ ] **CAT-01**: A project catalog section is visible on the landing page
-- [ ] **CAT-02**: Math flash card game code is refactored and integrated into the project (provided by owner)
-- [ ] **CAT-03**: Math flash card game is playable at a dedicated route (e.g. /projects/math-flashcards)
+- [x] **CAT-02**: Math flash card game code is refactored and integrated into the project (provided by owner)
+- [x] **CAT-03**: Math flash card game is playable at a dedicated route (e.g. /projects/math-flashcards)
 - [ ] **CAT-04**: The project catalog section links to the math flash card game page
 
 ## v2 Requirements
@@ -73,8 +73,8 @@
 | LAND-02 | Phase 2 | Pending |
 | LAND-03 | Phase 2 | Pending |
 | CAT-01 | Phase 3 | Pending |
-| CAT-02 | Phase 3 | Pending |
-| CAT-03 | Phase 3 | Pending |
+| CAT-02 | Phase 3 | Complete |
+| CAT-03 | Phase 3 | Complete |
 | CAT-04 | Phase 3 | Pending |
 
 **Coverage:**
