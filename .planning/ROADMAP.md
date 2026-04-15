@@ -54,8 +54,10 @@ Plans:
   2. The catalog section contains a link/card pointing to the math flash card game
   3. The math flash card game is playable at `/projects/math-flashcards` without errors
   4. The game page loads the owner-provided HTML/JS correctly (via iframe or adapted integration)
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Create lib/projects.ts typed data structure and render catalog section on landing page
+- [ ] 03-02-PLAN.md — Convert owner-provided HTML/JS flash card source to React page at /projects/math-flashcards
 
 ## Progress
 
@@ -66,4 +68,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/1 | Complete | 2026-04-13 |
 | 2. Landing Page | 2/2 | Complete | 2026-04-14 |
-| 3. Project Catalog | 0/? | Not started | - |
+| 3. Project Catalog | 0/2 | Not started | - |
