@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -258,7 +259,7 @@ export default function MathFlashcardsPage() {
     stopTimer();
     const endless = questionCount === "endless";
 
-    let qs: Question[] = [];
+    const qs: Question[] = [];
     if (!endless) {
       const count = questionCount as number;
       for (let i = 0; i < count; i++) {
@@ -481,12 +482,12 @@ export default function MathFlashcardsPage() {
         }
       >
         {/* Back link */}
-        <a
+        <Link
           href="/"
           className="fixed top-4 left-4 text-[#ededed]/40 text-xs hover:text-[#ededed]/70 transition-colors duration-0 z-50"
         >
           ← the shadow realm
-        </a>
+        </Link>
 
         <div className="w-full max-w-[480px]">
 
