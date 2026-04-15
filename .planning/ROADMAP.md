@@ -13,7 +13,7 @@ Three phases deliver a live, minimal dark personal site with a working project c
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Scaffold Next.js project, wire GitHub to Vercel, verify live deploy
-- [ ] **Phase 2: Landing Page** - Build dark visual identity, header, blurb, and favicon
+- [x] **Phase 2: Landing Page** - Build dark visual identity, header, blurb, and favicon
 - [ ] **Phase 3: Project Catalog** - Add catalog section and integrate math flash card game
 
 ## Phase Details
@@ -42,8 +42,8 @@ Plans:
   5. Favicon renders correctly in the browser tab and Geist (or equivalent) font is applied
 **Plans:** 2 plans
 Plans:
-- [ ] 02-01-PLAN.md — Fix globals.css (dark-always palette, remove Arial, remove media query), wire className="dark" on html, replace page.tsx with centered splash layout and heading gradient
-- [ ] 02-02-PLAN.md — Blurb copy checkpoint (user approves), insert approved blurb, create SVG favicon (app/icon.svg), update metadata, delete scaffold SVGs from public/
+- [x] 02-01-PLAN.md — Fix globals.css (dark-always palette, remove Arial, remove media query), wire className="dark" on html, replace page.tsx with centered splash layout and heading gradient
+- [x] 02-02-PLAN.md — Blurb copy checkpoint (user approves), insert approved blurb, create SVG favicon (app/icon.svg), update metadata, delete scaffold SVGs from public/
 
 ### Phase 3: Project Catalog
 **Goal**: The site has a live project catalog, and the math flash card game is playable at a dedicated route
@@ -65,5 +65,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 1/1 | Complete | 2026-04-13 |
-| 2. Landing Page | 0/2 | Not started | - |
+| 2. Landing Page | 2/2 | Complete | 2026-04-14 |
 | 3. Project Catalog | 0/? | Not started | - |
