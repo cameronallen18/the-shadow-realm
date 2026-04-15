@@ -6,7 +6,7 @@ export default function Home() {
           the shadow realm
         </h1>
         <p className="text-[#ededed]/60 text-sm tracking-wide">
-          somewhere to put things. more eventually.
+          my digital junk drawer.
         </p>
       </div>
     </main>
