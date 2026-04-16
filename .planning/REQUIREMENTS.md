@@ -119,14 +119,32 @@
 | CAT-02 | Phase 3 | Complete |
 | CAT-03 | Phase 3 | Complete |
 | CAT-04 | Phase 3 | Complete |
-| GAME-01–07 | Phase TBD | Pending |
-| SCORE-01–03 | Phase TBD | Pending |
-| INPUT-01–04 | Phase TBD | Pending |
-| DISPLAY-01–03 | Phase TBD | Pending |
-| VIS-01–03 | Phase TBD | Pending |
-| AUDIO-01–04 | Phase TBD | Pending |
-| CAT-05 | Phase TBD | Pending |
+| CAT-05 | Phase 4 | Pending |
+| GAME-04 | Phase 4 | Pending |
+| GAME-06 | Phase 4 | Pending |
+| DISPLAY-01 | Phase 5 | Pending |
+| DISPLAY-02 | Phase 5 | Pending |
+| DISPLAY-03 | Phase 5 | Pending |
+| VIS-01 | Phase 5 | Pending |
+| VIS-02 | Phase 5 | Pending |
+| VIS-03 | Phase 5 | Pending |
+| GAME-01 | Phase 6 | Pending |
+| GAME-02 | Phase 6 | Pending |
+| GAME-03 | Phase 6 | Pending |
+| GAME-07 | Phase 6 | Pending |
+| INPUT-01 | Phase 6 | Pending |
+| INPUT-02 | Phase 6 | Pending |
+| INPUT-03 | Phase 6 | Pending |
+| INPUT-04 | Phase 6 | Pending |
+| GAME-05 | Phase 7 | Pending |
+| SCORE-01 | Phase 7 | Pending |
+| SCORE-02 | Phase 7 | Pending |
+| SCORE-03 | Phase 7 | Pending |
+| AUDIO-01 | Phase 7 | Pending |
+| AUDIO-02 | Phase 7 | Pending |
+| AUDIO-03 | Phase 7 | Pending |
+| AUDIO-04 | Phase 7 | Pending |
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-15 — v1.1 Samus Run requirements added*
+*Last updated: 2026-04-15 — v1.1 Samus Run phase assignments added*
