@@ -3,85 +3,130 @@
 **Defined:** 2026-04-12
 **Core Value:** A live, publicly accessible home base that deploys cleanly from GitHub and can absorb new projects without turning into a mess.
 
-## v1 Requirements
+## v1.0 Requirements (Completed)
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Next.js 15 App Router project is scaffolded with TypeScript and Tailwind CSS v4
-- [ ] **INFRA-02**: GitHub repository connects to Vercel and auto-deploys on push to main
-- [ ] **INFRA-03**: Live Vercel URL is verified and accessible after first deploy
+- [x] **INFRA-01**: Next.js 15 App Router project is scaffolded with TypeScript and Tailwind CSS v4
+- [x] **INFRA-02**: GitHub repository connects to Vercel and auto-deploys on push to main
+- [x] **INFRA-03**: Live Vercel URL is verified and accessible after first deploy
 
 ### Design
 
-- [ ] **DESIGN-01**: Site uses a permanently dark background with cool-toned color palette (no warm tones, no loud colors)
-- [ ] **DESIGN-02**: Typography is set with a clean sans-serif font (Geist or equivalent)
-- [ ] **DESIGN-03**: Favicon is present and renders correctly in browser tabs
+- [x] **DESIGN-01**: Site uses a permanently dark background with cool-toned color palette (no warm tones, no loud colors)
+- [x] **DESIGN-02**: Typography is set with a clean sans-serif font (Geist or equivalent)
+- [x] **DESIGN-03**: Favicon is present and renders correctly in browser tabs
 
 ### Landing Page
 
-- [ ] **LAND-01**: Page displays "the shadow realm" as the primary heading (lowercase, intentional)
-- [ ] **LAND-02**: A short blurb communicates this is a personal placeholder / project dumping ground, understated in tone
-- [ ] **LAND-03**: A single subtle visual or graphic element is present — not busy, not animated, just breaks the empty page
+- [x] **LAND-01**: Page displays "the shadow realm" as the primary heading (lowercase, intentional)
+- [x] **LAND-02**: A short blurb communicates this is a personal placeholder / project dumping ground, understated in tone
+- [x] **LAND-03**: A single subtle visual or graphic element is present — not busy, not animated, just breaks the empty page
 
 ### Project Catalog
 
-- [ ] **CAT-01**: A project catalog section is visible on the landing page
+- [x] **CAT-01**: A project catalog section is visible on the landing page
 - [x] **CAT-02**: Math flash card game code is refactored and integrated into the project (provided by owner)
-- [x] **CAT-03**: Math flash card game is playable at a dedicated route (e.g. /projects/math-flashcards)
-- [ ] **CAT-04**: The project catalog section links to the math flash card game page
+- [x] **CAT-03**: Math flash card game is playable at a dedicated route (/projects/math-flashcards)
+- [x] **CAT-04**: The project catalog section links to the math flash card game page
 
-## v2 Requirements
+## v1.1 Requirements — Samus Run
 
-### Infrastructure
+### Game Mechanics
 
-- **INFRA-V2-01**: Custom domain is connected to the Vercel deployment
+- [ ] **GAME-01**: User can play a side-scrolling Norfair escape where Samus clears rock wall gaps
+- [ ] **GAME-02**: Samus falls with gravity; input applies upward space jump impulse
+- [ ] **GAME-03**: Rock wall obstacles scroll right-to-left with randomized gap heights
+- [ ] **GAME-04**: Game opens in idle state — Samus bobs in varia suit, waiting for first input
+- [ ] **GAME-05**: First input starts the game; collision with walls or bounds triggers game over
+- [ ] **GAME-06**: Game over screen shows final score and restart option
+- [ ] **GAME-07**: Scroll speed increases noticeably each ~10 obstacles cleared
 
-### Projects
+### Score
 
-- **PROJ-V2-01**: Facebook Marketplace posting tool integrated as a project entry (not ready yet)
-- **PROJ-V2-02**: Additional projects added to catalog as they're built
+- [ ] **SCORE-01**: Score increments each time Samus clears an obstacle gap
+- [ ] **SCORE-02**: Current score is visible during play
+- [ ] **SCORE-03**: High score persists via localStorage and shows on idle/game over screens
 
-### Landing Page
+### Input
 
-- **LAND-V2-01**: Project detail pages with descriptions (currently just link-outs)
+- [ ] **INPUT-01**: Tap (touchstart) triggers space jump — mobile/tablet first-class
+- [ ] **INPUT-02**: Mouse click triggers space jump — desktop
+- [ ] **INPUT-03**: Spacebar and arrow keys trigger space jump — keyboard
+- [ ] **INPUT-04**: First valid input transitions game from idle → playing
+
+### Display
+
+- [ ] **DISPLAY-01**: Canvas fills viewport on phone, tablet, and desktop (100dvh, responsive)
+- [ ] **DISPLAY-02**: Canvas renders at device pixel ratio — no blur on retina/iPad screens
+- [ ] **DISPLAY-03**: Norfair environment: dark cave background, lava detail, reddish rock wall obstacles
+
+### Visuals
+
+- [ ] **VIS-01**: Samus varia suit sprite shown during idle state
+- [ ] **VIS-02**: Samus space jump sprite shown while airborne/jumping
+- [ ] **VIS-03**: Rock wall obstacles styled as reddish Norfair rock
+
+### Audio
+
+- [ ] **AUDIO-01**: Jump sound plays on each space jump input
+- [ ] **AUDIO-02**: Score sound plays when clearing an obstacle
+- [ ] **AUDIO-03**: Death/hit sound plays on game over
+- [ ] **AUDIO-04**: Audio unlocks on first user gesture (iOS AudioContext compliance)
+
+### Catalog
+
+- [ ] **CAT-05**: New catalog entry on landing page links to /projects/samus-run
+
+## Future Requirements
+
+- Pause/resume functionality
+- Background music (Norfair theme)
+- Medal tiers for score milestones
+- Custom domain connected to Vercel deployment (INFRA-V2-01)
+- Facebook Marketplace posting tool integrated as project entry (PROJ-V2-01)
+- Additional projects added to catalog as they're built (PROJ-V2-02)
+- Project detail pages with descriptions (LAND-V2-01)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
+| Leaderboard / backend scores | localStorage only; no server, no auth |
+| Multiple game modes or difficulty settings | Keep it simple |
+| Additional character skins or environments | Future milestone |
 | Backend / API routes | No server-side logic needed; static site |
 | Auth / login | Personal site, no multi-user requirement |
 | CMS / content management | Overkill; lib/projects.ts array is sufficient |
 | Blog | Not requested; counter to the minimal vibe |
-| Contact form | Not requested |
-| Animations / scroll effects | Explicitly counter to the design brief |
-| Analytics | Not requested for v1 |
-| Social meta tags / OG images | Nice-to-have; defer to v2 |
-| `output: 'export'` static export | Vercel native adapter handles SSG; this flag would break image optimization |
+| Animations / scroll effects on landing page | Explicitly counter to the design brief |
+| Analytics | Not requested |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
-| DESIGN-01 | Phase 2 | Pending |
-| DESIGN-02 | Phase 2 | Pending |
-| DESIGN-03 | Phase 2 | Pending |
-| LAND-01 | Phase 2 | Pending |
-| LAND-02 | Phase 2 | Pending |
-| LAND-03 | Phase 2 | Pending |
-| CAT-01 | Phase 3 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
+| INFRA-03 | Phase 1 | Complete |
+| DESIGN-01 | Phase 2 | Complete |
+| DESIGN-02 | Phase 2 | Complete |
+| DESIGN-03 | Phase 2 | Complete |
+| LAND-01 | Phase 2 | Complete |
+| LAND-02 | Phase 2 | Complete |
+| LAND-03 | Phase 2 | Complete |
+| CAT-01 | Phase 3 | Complete |
 | CAT-02 | Phase 3 | Complete |
 | CAT-03 | Phase 3 | Complete |
-| CAT-04 | Phase 3 | Pending |
-
-**Coverage:**
-- v1 requirements: 13 total
-- Mapped to phases: 13
-- Unmapped: 0 ✓
+| CAT-04 | Phase 3 | Complete |
+| GAME-01–07 | Phase TBD | Pending |
+| SCORE-01–03 | Phase TBD | Pending |
+| INPUT-01–04 | Phase TBD | Pending |
+| DISPLAY-01–03 | Phase TBD | Pending |
+| VIS-01–03 | Phase TBD | Pending |
+| AUDIO-01–04 | Phase TBD | Pending |
+| CAT-05 | Phase TBD | Pending |
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after roadmap creation*
+*Last updated: 2026-04-15 — v1.1 Samus Run requirements added*
