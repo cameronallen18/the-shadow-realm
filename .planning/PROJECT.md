@@ -12,7 +12,11 @@ A live, publicly accessible home base that deploys cleanly from GitHub and can a
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Dark, minimal landing page with cool-toned color palette — validated in Phase 1
+- [x] GitHub → Vercel CI/CD pipeline wired up — validated in Phase 1
+- [x] Project catalog section with entries — validated in Phase 3
+- [x] Math flash card game as first project entry — validated in Phase 3
+- [x] Samus Run game shell entry in catalog, linking to /projects/samus-run — validated in Phase 4
 
 ### Active
 
@@ -72,4 +76,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-12 after initialization*
+*Last updated: 2026-04-17 after Phase 4 (Game Shell) completion*
