@@ -78,8 +78,9 @@ Plans:
   2. The page loads without JavaScript errors on both desktop and a mobile device
   3. On load, an idle/start screen is visible — Samus is shown waiting for input, not a blank canvas
   4. A game-over screen exists with final score and a restart affordance (verified by triggering it from code)
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 1 plan
+Plans:
+- [ ] 04-01-PLAN.md — Add samus-run catalog entry, create SSR-guarded route, build state machine with idle/playing/gameover overlay screens
 
 ### Phase 5: Canvas and Environment
 **Goal**: The canvas fills the viewport correctly on every target device and the complete Norfair visual world is drawn — background, rock walls, and both Samus sprite states — before any physics run
@@ -130,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Foundation | 1/1 | Complete | 2026-04-13 |
 | 2. Landing Page | 2/2 | Complete | 2026-04-14 |
 | 3. Project Catalog | 2/2 | Complete | 2026-04-15 |
-| 4. Game Shell | 0/? | Not started | - |
+| 4. Game Shell | 0/1 | Not started | - |
 | 5. Canvas and Environment | 0/? | Not started | - |
 | 6. Physics and Input | 0/? | Not started | - |
 | 7. Collision, Scoring, and Audio | 0/? | Not started | - |
