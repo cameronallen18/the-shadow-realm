@@ -1,412 +1,352 @@
-# Architecture: Flappy Bird Integration
+# Architecture Patterns
 
-**Project:** the shadow realm — v1.1 Flappy Bird
-**Researched:** 2026-04-15
-**Confidence:** HIGH (all decisions grounded in observed codebase, no speculation)
+**Domain:** Next.js personal site / project catalog hub
+**Researched:** 2026-04-12
+**Confidence:** HIGH — all key decisions verified against official Next.js docs, Vercel docs, and Tailwind CSS docs
 
 ---
 
-## Existing Architecture (observed, not assumed)
+## Recommended Architecture
+
+A minimal App Router Next.js site deployed natively on Vercel (no `output: 'export'` needed), with standalone HTML/JS mini-projects served as static files from `public/projects/<slug>/` and embedded via `<iframe>` on catalog entry pages.
 
 ```
-app/
-  layout.tsx                    — RootLayout, Geist fonts, dark class hardcoded on <html>
-  globals.css                   — Tailwind v4 @import, CSS vars, .heading-gradient
-  page.tsx                      — Server Component, imports lib/projects.ts, renders catalog
-  projects/
-    math-flashcards/
-      page.tsx                  — "use client" single-file component, all logic + sub-components inline
-lib/
-  projects.ts                   — Project[] typed array, single source of truth for catalog
-next.config.ts                  — Empty config, no output: 'export'
-package.json                    — Next.js 15.3.9, React 19, Tailwind v4
+GitHub push
+  → Vercel detects Next.js (zero-config)
+  → next build runs server-side on Vercel
+  → Output served from Vercel's CDN edge network
+
+URL structure:
+  /                          → Landing page (home)
+  /projects                  → Catalog index
+  /projects/[slug]           → Individual project page (React, contains iframe or link)
+  /projects/math-flashcards  → iframe → /static/math-flashcards/index.html
+  /static/math-flashcards/   → Standalone HTML/JS game (in public/)
 ```
 
-There is no `src/` directory. No `public/` directory exists yet. The math-flashcards page is the established pattern for project pages: one `page.tsx` file, `"use client"` at the top, all logic and inline sub-components in the same file.
+---
 
-The catalog data model in `lib/projects.ts`:
-```typescript
-export interface Project {
-  slug: string;
-  name: string;
-  description: string;
-  href: string;
+## Decision 1: App Router vs Pages Router
+
+**Use App Router.** Confidence: HIGH.
+
+App Router is Next.js's current and future primary architecture. The Pages Router is in maintenance mode — Vercel's own docs, Next.js docs, and the broader 2025 ecosystem all treat App Router as the default for new projects.
+
+For a simple static personal site, App Router adds no meaningful complexity. The only files you'll write are `app/layout.tsx`, `app/page.tsx`, and `app/projects/[slug]/page.tsx`. That's it.
+
+**What App Router gives you over Pages Router:**
+- Server Components by default (no client-side JS shipped for static content — good for performance)
+- Nested layouts without `_app.tsx` workarounds
+- Co-location of components with routes using `_components/` private folders
+- Future-proof: any capability added to Next.js from here forward will land in App Router first
+
+**Reject Pages Router because:** It is not deprecated but it is not where Next.js is heading. Starting a new project on Pages Router in 2026 means migrating later or staying on a dead branch.
+
+---
+
+## Decision 2: Vercel Deployment — Native vs `output: 'export'`
+
+**Do NOT use `output: 'export'`. Deploy natively to Vercel.** Confidence: HIGH.
+
+This is the most commonly misunderstood decision for a "static" Next.js site on Vercel.
+
+### What `output: 'export'` does
+Converts Next.js into a plain static site generator — produces an `out/` folder of HTML/CSS/JS files. Useful when deploying to S3, Netlify, Nginx, or any non-Node CDN host.
+
+### What `output: 'export'` breaks
+- `next/image` optimization (disabled — images are not optimized)
+- Route Handlers (`app/api/` routes)
+- Middleware
+- ISR (incremental static regeneration)
+- Dynamic routes require `generateStaticParams()` to be fully enumerated at build time
+
+### Why Vercel does not need it
+Vercel is the native Next.js platform. When you push to GitHub and Vercel detects a Next.js project, it runs `next build` on Vercel's infrastructure and serves output from its CDN edge network automatically. All pages that can be statically rendered are served as static HTML from the CDN. No `output: 'export'` flag needed.
+
+In short: `output: 'export'` is for deploying Next.js somewhere that is *not* Vercel. On Vercel, it removes capabilities for no benefit.
+
+### next.config.ts for this project
+
+```ts
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  // No output: 'export' — Vercel handles this natively
+  // images.unoptimized only needed if using output: 'export'
 }
-export const projects: Project[] = [
-  { slug: "math-flashcards", name: "math flash cards", ... }
-];
+
+export default nextConfig
 ```
 
-`app/page.tsx` maps over `projects` directly — no route generation, just links. Adding a new catalog entry is a one-line array addition.
+That's it. Zero special config required for Vercel deployment.
 
 ---
 
-## Recommended File Structure
+## Decision 3: Standalone HTML/JS Projects — Public Folder + iframe
+
+**Put standalone HTML/JS projects in `public/static/<slug>/` and embed with `<iframe>`.** Confidence: HIGH.
+
+### Options evaluated
+
+| Approach | Verdict | Reason |
+|---|---|---|
+| `public/static/<slug>/index.html` + iframe | **Use this** | Clean isolation, no DOM conflicts, served at predictable URL, zero build involvement |
+| Rewrite as React component | Reject | Defeats the point; math flashcard game is already built |
+| Separate Vercel project per mini-app | Overkill for now | Multiple repos, multiple domains, added complexity for a personal site |
+| `dangerouslySetInnerHTML` to inline HTML | Reject | DOM ownership conflicts, CSP issues, CSS leakage in both directions |
+
+### How it works
+
+Files placed in `public/` are served verbatim at the root URL with no processing. So:
 
 ```
-app/
-  projects/
-    flappy-bird/
-      page.tsx            — "use client", game state machine, composes sub-components
-      GameCanvas.tsx      — Canvas rendering, rAF game loop, physics, audio
-      GameOverlay.tsx     — HUD, start screen, game-over screen (pure JSX, no browser APIs)
-lib/
-  projects.ts             — ADD flappy-bird entry (one line)
-public/
-  sounds/
-    flap.mp3
-    score.mp3
-    die.mp3
+public/static/math-flashcards/index.html
+public/static/math-flashcards/game.js
+public/static/math-flashcards/style.css
 ```
 
-**Why three files instead of one monolith:**
-Math-flashcards works as a single file because its logic is pure React state + DOM events — no imperative browser APIs. Flappy Bird requires a `requestAnimationFrame` loop, a Canvas ref with imperative draw calls, and Web Audio. Mixing that teardown logic with screen-state JSX creates a component that is hard to reason about and harder to debug. `GameCanvas.tsx` isolates all imperative code. `GameOverlay.tsx` has zero browser API calls, making it readable and modifiable without touching the game loop.
+...are accessible at:
 
-**Why not split further (separate HUD, StartScreen, GameOverScreen components):**
-This is a personal project with one developer. Three files is the right size. More files mean more prop-threading and more places to look when something breaks. Inline sub-components inside `GameOverlay.tsx` (following the math-flashcards pattern) are the right call.
+```
+https://yourdomain.com/static/math-flashcards/index.html
+https://yourdomain.com/static/math-flashcards/game.js
+```
 
-**Why not reuse the public/static/ iframe pattern from the earlier architecture doc:**
-That pattern exists for the standalone HTML/JS math-flashcards file that is already built. Flappy Bird is being built from scratch in React/TypeScript — it belongs as a native Next.js page, not an iframe over an HTML file.
+The corresponding catalog page at `app/projects/math-flashcards/page.tsx` renders:
+
+```tsx
+export default function MathFlashcardsPage() {
+  return (
+    <main>
+      <h1>Math Flash Cards</h1>
+      <p>Simple arithmetic drill game for kids.</p>
+      <iframe
+        src="/static/math-flashcards/index.html"
+        title="Math Flash Cards"
+        width="100%"
+        height="600"
+        style={{ border: 'none' }}
+      />
+    </main>
+  )
+}
+```
+
+### iframe height
+For games/apps with fixed viewport dimensions, set a fixed pixel height. For content-height responsiveness, use a `ResizeObserver` postMessage pattern — but fixed height is fine for v1.
+
+### Security headers (if needed)
+Vercel does not block same-origin iframes by default. No `X-Frame-Options` changes needed for self-hosted content. Only matters if embedding third-party URLs.
+
+---
+
+## Decision 4: Tailwind CSS Setup
+
+**Use Tailwind CSS v4 with the PostCSS plugin approach.** Confidence: HIGH (verified against official Tailwind docs, April 2026 — v4.2 is current).
+
+### v4 is a breaking change from v3
+
+v4 dropped `tailwind.config.ts` as the primary configuration mechanism. Configuration is now CSS-first via `@theme` blocks in your CSS file. There is no `content` array to configure — Tailwind v4 scans your files automatically.
+
+### Setup (verified against tailwindcss.com/docs/guides/nextjs)
+
+```bash
+npx create-next-app@latest the-shadow-realm --typescript --eslint --app
+cd the-shadow-realm
+npm install tailwindcss @tailwindcss/postcss postcss
+```
+
+**`postcss.config.mjs`** (create in project root):
+```js
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+}
+export default config
+```
+
+**`app/globals.css`** (replace contents with):
+```css
+@import "tailwindcss";
+
+/* Dark theme CSS variables go here */
+:root {
+  --background: #0a0a0a;
+  --foreground: #e5e5e5;
+}
+```
+
+**`app/layout.tsx`** imports globals.css as normal:
+```tsx
+import './globals.css'
+```
+
+No `tailwind.config.ts` file is needed for basic usage. If you need custom theme tokens, add them via `@theme` blocks in globals.css.
+
+### Dark mode
+With Tailwind v4, dark mode class strategy is configured in CSS:
+```css
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+```
+
+Apply `className="dark"` to the `<html>` element in `app/layout.tsx`. Since this site is dark-only, hardcode the `dark` class rather than toggling it.
+
+---
+
+## Folder Structure
+
+Recommended structure for a growing project catalog:
+
+```
+the-shadow-realm/
+├── app/
+│   ├── layout.tsx              # Root layout — html, body, dark class, font
+│   ├── page.tsx                # Landing page — hero, blurb, catalog preview
+│   ├── globals.css             # Tailwind import + CSS variables
+│   ├── projects/
+│   │   ├── page.tsx            # Full catalog index
+│   │   └── [slug]/
+│   │       └── page.tsx        # Individual project page (iframe host)
+│   └── _components/            # Underscore = private, excluded from routing
+│       ├── ProjectCard.tsx     # Catalog card component
+│       ├── Header.tsx
+│       └── Footer.tsx
+├── public/
+│   ├── static/
+│   │   └── math-flashcards/    # Standalone HTML/JS project
+│   │       ├── index.html
+│   │       ├── game.js
+│   │       └── style.css
+│   └── favicon.ico
+├── lib/
+│   └── projects.ts             # Project catalog data (typed array, no CMS)
+├── next.config.ts
+├── postcss.config.mjs
+├── tsconfig.json
+└── package.json
+```
+
+### Key structural decisions
+
+**`app/_components/`** — The underscore prefix makes this folder invisible to the Next.js router. Components live next to the routes that use them without creating accidental URL segments.
+
+**`lib/projects.ts`** — A typed array of project metadata is the right "CMS" for this scale. No database, no MDX, no Contentlayer. When the catalog grows to 20+ projects, evaluate MDX or a JSON file, but a TypeScript array is zero-friction:
+
+```ts
+export interface Project {
+  slug: string
+  title: string
+  description: string
+  type: 'iframe' | 'link' | 'coming-soon'
+  iframeSrc?: string   // e.g. '/static/math-flashcards/index.html'
+  externalUrl?: string
+}
+
+export const projects: Project[] = [
+  {
+    slug: 'math-flashcards',
+    title: 'Math Flash Cards',
+    description: 'Arithmetic drill game built for kids.',
+    type: 'iframe',
+    iframeSrc: '/static/math-flashcards/index.html',
+  },
+]
+```
+
+**Dynamic route `projects/[slug]`** — `generateStaticParams()` reads from `lib/projects.ts` so Vercel pre-renders each project page at build time:
+
+```ts
+export async function generateStaticParams() {
+  return projects.map((p) => ({ slug: p.slug }))
+}
+```
+
+**`public/static/`** — Nesting under `static/` (rather than `public/projects/`) keeps the URL namespace clean and avoids any collision with the Next.js `/projects` route. Files in `public/` are served verbatim; Next.js routes take precedence for path conflicts, but `public/projects/` would be confusing.
 
 ---
 
 ## Component Boundaries
 
-| Component | Responsibility | Browser APIs | Receives | Emits |
-|-----------|---------------|-------------|----------|-------|
-| `page.tsx` | Game state machine, layout shell, back link | None | — | gameState, score, highScore → children |
-| `GameCanvas.tsx` | Canvas draw, rAF loop, physics, collision, audio | Canvas 2D, rAF, Web Audio, localStorage (write on death) | gameState, onScore, onDie | callbacks |
-| `GameOverlay.tsx` | Start/dead screens, score HUD | None | gameState, score, highScore, onStart | — |
+| Component | Responsibility | Notes |
+|---|---|---|
+| `app/layout.tsx` | HTML shell, dark class, font, global nav | Server Component |
+| `app/page.tsx` | Hero section + catalog teaser | Server Component |
+| `app/projects/page.tsx` | Full project grid | Server Component, reads from `lib/projects.ts` |
+| `app/projects/[slug]/page.tsx` | Project detail + iframe | Server Component wrapping a Client Component for iframe resize if needed |
+| `_components/ProjectCard.tsx` | Single catalog entry card | Server Component unless it needs hover state |
+| `lib/projects.ts` | Typed project data | Plain TS module, no React |
+| `public/static/<slug>/` | Standalone HTML/JS app | Entirely outside Next.js — served as-is |
 
 ---
 
-## SSR Safety
+## Data Flow
 
-All three files in `app/projects/flappy-bird/` must begin with `"use client"`. This is the same approach math-flashcards uses. The `"use client"` directive on `page.tsx` establishes a client component boundary — Next.js will not attempt to server-render any component in this subtree.
+```
+lib/projects.ts (static typed array)
+  → app/projects/page.tsx (build-time read → static HTML)
+  → ProjectCard components (rendered to HTML at build time)
 
-Within client components, browser-only APIs must still be deferred because components render once on the client before the DOM is available. Rules by API:
+lib/projects.ts
+  → app/projects/[slug]/page.tsx (generateStaticParams → static HTML per project)
+  → <iframe src="/static/<slug>/index.html" />
 
-**Canvas ref access**
-Never access `canvasRef.current` outside a `useEffect` or event handler. It is `null` on the initial render pass.
-
-```typescript
-useEffect(() => {
-  const canvas = canvasRef.current; // safe here
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d")!;
-  // ...
-}, []);
+Browser requests /static/math-flashcards/index.html
+  → Vercel CDN serves public/ file directly (bypasses Next.js runtime entirely)
 ```
 
-**requestAnimationFrame**
-Start inside `useEffect`. Store the frame ID in a `useRef` so the cleanup function can cancel it.
-
-**localStorage**
-Read inside `useEffect` on mount. Writing during a game-over callback is fine — that callback is only ever called from a browser event, not during render.
-
-**AudioContext**
-Must be created inside a user gesture handler (click, pointerdown, keydown). Browsers block `new AudioContext()` before interaction. Do not create at module scope, in `useEffect`, or during render. Store in a `useRef`.
+No client-side data fetching. No API routes. No runtime server. Everything is pre-rendered at build time.
 
 ---
 
-## Game Loop Pattern
-
-```typescript
-// GameCanvas.tsx (structure, not final implementation)
-"use client";
-
-import { useRef, useEffect } from "react";
-
-export function GameCanvas({ gameState, onScore, onDie }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef<number>(0);
-  const worldRef = useRef<GameWorld>(initialWorld());
-
-  useEffect(() => {
-    if (gameState !== "playing") return;
-
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-
-    let last = performance.now();
-
-    function tick(now: number) {
-      const dt = Math.min((now - last) / 1000, 0.05); // cap at 50ms to survive tab switching
-      last = now;
-      updatePhysics(worldRef.current, dt);
-      drawFrame(ctx, canvas, worldRef.current);
-      frameRef.current = requestAnimationFrame(tick);
-    }
-
-    frameRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(frameRef.current);
-    };
-  }, [gameState, onScore, onDie]);
-
-  return <canvas ref={canvasRef} className="w-full h-full block" />;
-}
-```
-
-**Why `worldRef` not `useState` for physics:**
-React state updates are batched and asynchronous. A `requestAnimationFrame` loop calling `setState` 60 times per second creates 60 pending reconciliations per second and visual stutter. Physics state (bird Y position, velocity, pipe positions, score counter) belongs in a plain mutable object stored in `useRef`. Only values that need to trigger a React re-render — specifically the score display and game state transitions — flow out through callbacks.
-
-**The dt (delta time) approach:**
-Using elapsed wall-clock time per frame rather than fixed physics steps makes the game frame-rate independent. A device running at 120fps and a device running at 60fps will both produce the same physics trajectory. Cap dt at 50ms to prevent a huge physics jump after a tab regains focus.
-
----
-
-## Responsive Canvas
-
-```typescript
-useEffect(() => {
-  const canvas = canvasRef.current!;
-  const resize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  };
-  resize();
-  window.addEventListener("resize", resize);
-  return () => window.removeEventListener("resize", resize);
-}, []);
-```
-
-All game object sizes must be expressed as fractions of `canvas.width` / `canvas.height`, not pixel constants:
-
-```typescript
-const PIPE_WIDTH = canvas.width * 0.12;
-const PIPE_GAP = canvas.height * 0.28;
-const BIRD_RADIUS = canvas.width * 0.04;
-```
-
-This is the only way to get a game that genuinely fills the screen on a 375px phone and a 1440px desktop with correct proportions on both.
-
----
-
-## State Management
-
-No external state library. All state is local to the `flappy-bird/` route.
-
-| State piece | Storage | Location | Why |
-|-------------|---------|----------|-----|
-| `gameState: "idle" \| "playing" \| "dead"` | useState | `page.tsx` | Drives which overlay renders and whether game loop runs |
-| `score: number` | useState | `page.tsx` | Displayed in HUD; flows up from GameCanvas via `onScore` callback |
-| `highScore: number` | useState | `page.tsx` | Initialized from localStorage on mount; written to localStorage on death |
-| Physics world (bird, pipes, velocity) | useRef object | `GameCanvas.tsx` | Mutated every frame, never triggers re-render |
-| AudioContext + sound buffers | useRef | `GameCanvas.tsx` | Created once on first gesture, persisted across rounds |
-
-**localStorage key:** `fb-hi`. Short, namespaced, no collision risk with any other feature on the site.
-
-**High score initialization:**
-```typescript
-// page.tsx
-useEffect(() => {
-  const stored = localStorage.getItem("fb-hi");
-  if (stored) setHighScore(Number(stored));
-}, []);
-```
-
-**High score write (inside onDie callback):**
-```typescript
-const handleDie = useCallback((finalScore: number) => {
-  setGameState("dead");
-  if (finalScore > highScore) {
-    setHighScore(finalScore);
-    localStorage.setItem("fb-hi", String(finalScore));
-  }
-}, [highScore]);
-```
-
----
-
-## Input Handling
-
-Single input: flap. Three trigger sources — tap (mobile), click (desktop), spacebar (keyboard).
-
-```typescript
-useEffect(() => {
-  if (gameState !== "playing") return;
-
-  const flap = (e: Event) => {
-    e.preventDefault(); // prevents scroll on spacebar, scroll bounce on mobile
-    worldRef.current.velocity = FLAP_VELOCITY;
-    playSound(audioRef.current?.flap);
-  };
-
-  const handleKey = (e: KeyboardEvent) => {
-    if (e.code === "Space") flap(e);
-  };
-
-  window.addEventListener("pointerdown", flap);
-  window.addEventListener("keydown", handleKey);
-
-  return () => {
-    window.removeEventListener("pointerdown", flap);
-    window.removeEventListener("keydown", handleKey);
-  };
-}, [gameState]);
-```
-
-Use `pointerdown` rather than `touchstart` + `click` separately. `pointerdown` fires for both mouse and touch with one listener and does not double-fire on mobile the way `click` does after `touchstart`.
-
-The "idle" state also needs input to start the game — wire the same `pointerdown` to transition `"idle" -> "playing"` in `page.tsx`, passing it down as an `onStart` prop to `GameOverlay.tsx`.
-
----
-
-## Audio
-
-**Asset location:** `public/sounds/flap.mp3`, `public/sounds/score.mp3`, `public/sounds/die.mp3`. Served as static files at `/sounds/flap.mp3` (no `public/` prefix in URLs). No `public/` directory exists yet — creating it is required.
-
-**Loading pattern:**
-
-```typescript
-// In GameCanvas.tsx
-const audioRef = useRef<{
-  ctx: AudioContext;
-  flap: AudioBuffer;
-  score: AudioBuffer;
-  die: AudioBuffer;
-} | null>(null);
-
-// Called on first user gesture (pointerdown/keydown)
-async function initAudio() {
-  if (audioRef.current) return; // already initialized
-  const ctx = new AudioContext();
-  const [flap, score, die] = await Promise.all([
-    loadBuffer(ctx, "/sounds/flap.mp3"),
-    loadBuffer(ctx, "/sounds/score.mp3"),
-    loadBuffer(ctx, "/sounds/die.mp3"),
-  ]);
-  audioRef.current = { ctx, flap, score, die };
-}
-
-async function loadBuffer(ctx: AudioContext, url: string): Promise<AudioBuffer> {
-  const res = await fetch(url);
-  const arr = await res.arrayBuffer();
-  return ctx.decodeAudioData(arr);
-}
-
-function playSound(buffer: AudioBuffer | undefined) {
-  if (!buffer || !audioRef.current) return;
-  const { ctx } = audioRef.current;
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  source.connect(ctx.destination);
-  source.start();
-}
-```
-
-`BufferSourceNode` instances are single-use by Web Audio spec — create a new one per `playSound` call. The `AudioBuffer` (decoded audio data) is reusable; the `BufferSourceNode` (playback instance) is not.
-
-If sourcing sound files blocks development, the entire audio section can be stubbed (no-op functions) and added last. The game is fully functional without sound.
-
----
-
-## Canvas Drawing Approach
-
-The PROJECT.md spec says "classic colorful aesthetic (blue sky, green pipes, yellow bird)". This is achievable entirely with Canvas 2D primitives — rectangles, arcs, gradient fills. No image files or sprites are required, which eliminates asset loading complexity.
-
-```typescript
-// Example draw calls
-// Sky background
-ctx.fillStyle = "#70c5ce";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-// Bird (yellow circle)
-ctx.fillStyle = "#f5c518";
-ctx.beginPath();
-ctx.arc(birdX, world.birdY, BIRD_RADIUS, 0, Math.PI * 2);
-ctx.fill();
-
-// Pipes (green rectangles)
-ctx.fillStyle = "#5fa832";
-// top pipe
-ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapTop);
-// bottom pipe
-ctx.fillRect(pipe.x, pipe.gapTop + PIPE_GAP, PIPE_WIDTH, canvas.height);
-```
-
-Pixel art sprites can be layered in later with `drawImage()` if desired, without restructuring anything.
-
----
-
-## New Files vs Modified Files
-
-### New files (create)
-
-| File | Notes |
-|------|-------|
-| `app/projects/flappy-bird/page.tsx` | Route entry, game state, layout, back link |
-| `app/projects/flappy-bird/GameCanvas.tsx` | Canvas, rAF loop, physics, collision detection, audio |
-| `app/projects/flappy-bird/GameOverlay.tsx` | Start screen, game-over screen, score HUD |
-| `public/sounds/flap.mp3` | Required if audio is included |
-| `public/sounds/score.mp3` | Required if audio is included |
-| `public/sounds/die.mp3` | Required if audio is included |
-
-### Modified files (existing)
-
-| File | Change |
-|------|--------|
-| `lib/projects.ts` | Add one object to the `projects` array |
-
-`app/page.tsx` does not need to change — it already maps over `lib/projects.ts` dynamically. `app/layout.tsx`, `app/globals.css`, and `next.config.ts` do not need to change.
-
----
-
-## Build Order (dependency-aware)
-
-**Step 1 — `lib/projects.ts` entry**
-Add the flappy-bird entry first. The catalog link on the home page will appear immediately. The route at `/projects/flappy-bird` will 404 until step 3, which is fine during development.
-
-**Step 2 — `GameOverlay.tsx`**
-Pure JSX, no browser APIs. Build and visually verify the start screen and game-over screen before writing a single line of canvas code. Define the props interface here — it becomes the contract `page.tsx` fulfills.
-
-**Step 3 — `page.tsx`**
-Wire up the game state machine (`idle -> playing -> dead -> idle`). Import and render `GameOverlay`. Stub `GameCanvas` with a placeholder `<div>`. At this point the UI flow is testable end-to-end in the browser.
-
-**Step 4 — `GameCanvas.tsx` — canvas mount + resize**
-Get the canvas rendering and filling the viewport. No game logic yet — just a colored rectangle to prove the canvas works.
-
-**Step 5 — `GameCanvas.tsx` — static draw**
-Draw the bird, pipes, and background at fixed positions. No physics, no movement. Verify visual proportions on mobile and desktop.
-
-**Step 6 — `GameCanvas.tsx` — physics loop**
-Add the rAF loop, gravity, flap velocity, pipe scrolling. Bird should fall and flap on tap/spacebar. Pipes should scroll left and loop.
-
-**Step 7 — `GameCanvas.tsx` — collision + scoring**
-Add bounding-box collision detection. Emit `onDie`. Add pipe gap crossing detection. Emit `onScore`.
-
-**Step 8 — `GameCanvas.tsx` — audio**
-Add Web Audio init on first gesture, load buffers, wire `playSound` calls to flap/score/die events. This is the last step because it can be deferred or skipped without affecting any other step.
+## Scalability Considerations
+
+| Concern | Now (1-5 projects) | Later (20+ projects) |
+|---|---|---|
+| Project data | Typed array in `lib/projects.ts` | Consider splitting to JSON or MDX if descriptions get long |
+| Catalog page | Single static page | Still fine; add filtering/search as Client Component only when needed |
+| Standalone projects | `public/static/<slug>/` | Same pattern scales; each project is isolated |
+| Build time | Negligible | Still negligible — no external data fetching |
+| Routing complexity | None | Consider route groups `(catalog)` if the site grows beyond catalog |
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### useState for physics
-Calling `setState` inside a `requestAnimationFrame` loop triggers 60+ React reconciliations per second. The game becomes a slideshow and the console fills with warnings. Use a mutable `useRef` object for all physics state. Only call `setState` for game-phase transitions and score display updates.
+### Anti-Pattern 1: `output: 'export'` on Vercel
+**What:** Adding `output: 'export'` to next.config.ts when deploying to Vercel.
+**Why bad:** Disables image optimization, API routes, and middleware for zero benefit. Vercel handles Next.js natively.
+**Instead:** Deploy with default config. Vercel auto-detects and serves static pages from CDN.
 
-### AudioContext at module or component scope
-The browser will throw `NotAllowedError` if `new AudioContext()` is called before a user gesture. Server-side, `AudioContext` does not exist at all. Create it inside the first `pointerdown` or `keydown` handler, guarded by a check that it hasn't been created already.
+### Anti-Pattern 2: Rewriting standalone projects as React components
+**What:** Converting the math flashcard game from HTML/JS into a React component.
+**Why bad:** Time cost with no user benefit. The game already works. Isolation is a feature.
+**Instead:** `public/static/<slug>/` + iframe. Ship it as-is.
 
-### Missing cancelAnimationFrame in useEffect cleanup
-When `gameState` changes from `"playing"` to `"dead"`, React cleans up the current `useEffect` and does not start a new one (since the new `gameState` is `"dead"`, not `"playing"`). Without `cancelAnimationFrame`, the old loop keeps running against a dead game state, consuming CPU and potentially calling `onDie` repeatedly.
+### Anti-Pattern 3: CMS or database for project metadata
+**What:** Adding Contentlayer, Sanity, or a database to manage project entries.
+**Why bad:** Massive complexity increase for a typed array problem. Adds build dependencies and potential failure points.
+**Instead:** `lib/projects.ts` — a TypeScript array. Refactor when the friction is actually felt.
 
-### Hardcoded pixel dimensions
-A bird radius of `20px` looks correct at 390px viewport width and broken at 1440px. Express all game object sizes as fractions of canvas dimensions. Define constants like `const BIRD_RADIUS = canvas.width * 0.04` inside the draw/physics functions where `canvas` is available.
+### Anti-Pattern 4: Pages Router for greenfield start
+**What:** Starting the project with `pages/` instead of `app/`.
+**Why bad:** Pages Router is maintenance-only. Any new Next.js feature (PPR, React 19 improvements, etc.) will land in App Router first or exclusively.
+**Instead:** App Router from day one.
 
-### Accessing canvasRef.current during render
-`useRef` is initialized to `null`. Accessing `.current` during the render function (outside a `useEffect` or event handler) will throw a null pointer error. Canvas ref access belongs exclusively in effects and callbacks.
+### Anti-Pattern 5: Client Components by default
+**What:** Adding `'use client'` to every component.
+**Why bad:** Ships JavaScript to the browser unnecessarily. A personal static site should be mostly HTML.
+**Instead:** Default to Server Components. Only add `'use client'` when you need browser APIs, event handlers, or state (e.g., iframe resize observer).
 
 ---
 
 ## Sources
 
-- Observed codebase: `app/projects/math-flashcards/page.tsx` — established "use client" pattern, inline sub-components
-- Observed codebase: `lib/projects.ts` — Project interface and catalog array structure
-- Observed codebase: `app/page.tsx` — catalog renders from lib/projects.ts, no change needed
-- MDN Canvas API: https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API (browser-native, HIGH confidence)
-- MDN Web Audio API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API (browser-native, HIGH confidence)
-- React docs on useRef for mutable values: https://react.dev/reference/react/useRef#storing-information-between-renders (HIGH confidence)
-- Next.js "use client" directive: https://nextjs.org/docs/app/api-reference/directives/use-client (HIGH confidence)
+- Next.js App Router vs Pages Router: https://nextjs.org/docs/app/guides/migrating/app-router-migration
+- Next.js `output` config reference: https://nextjs.org/docs/app/api-reference/config/next-config-js/output
+- Vercel Next.js native deployment: https://vercel.com/docs/frameworks/full-stack/nextjs
+- Next.js static file serving (public folder): https://nextjs.org/docs/pages/api-reference/file-conventions/public-folder
+- Tailwind CSS v4 + Next.js setup: https://tailwindcss.com/docs/guides/nextjs
+- Next.js project structure: https://nextjs.org/docs/app/getting-started/project-structure
+- Vercel discussion on `output: 'export'` removal: https://github.com/vercel/next.js/discussions/58790
