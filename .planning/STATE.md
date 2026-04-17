@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: v1.1
+milestone_name: Samus Run
 status: planning
-stopped_at: Completed 03-02-PLAN.md — Phase 3 complete
-last_updated: "2026-04-15T16:55:16.452Z"
-last_activity: 2026-04-14 — Phase 2 execution complete
+stopped_at: v1.1 Samus Run roadmap created — Phases 4–7 defined, files written
+last_updated: "2026-04-17T20:05:01.255Z"
+last_activity: 2026-04-17
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 7
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 100
 ---
 
@@ -18,42 +18,52 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-12)
+See: .planning/PROJECT.md (updated 2026-04-15)
 
 **Core value:** A live, publicly accessible home base that deploys cleanly from GitHub and can absorb new projects without turning into a mess.
-**Current focus:** Phase 3 - Project Catalog
+**Current focus:** Phase 4 - Game Shell (v1.1 Samus Run)
 
 ## Current Position
 
-Phase: 3 of 3 (Project Catalog)
-Plan: 0 of ? in current phase
-Status: Phase 2 complete — ready to plan Phase 3
-Last activity: 2026-04-14 — Phase 2 execution complete
+Phase: 5
+Plan: Not started
+Status: Roadmap complete, ready to plan Phase 4
+Last activity: 2026-04-17
 
-Progress: [██████░░░░] 67%
+Progress (v1.1): [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 6 (v1.0: 5 plans across 3 phases)
 - Average duration: -
 - Total execution time: -
 
-**By Phase:**
+**By Phase (v1.0 complete):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Foundation | 1 | - | - |
 | 2. Landing Page | 2 | - | - |
+| 3. Project Catalog | 2 | - | - |
+| 04 | 1 | - | - |
+
+**By Phase (v1.1 in progress):**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| 4. Game Shell | TBD | - | - |
+| 5. Canvas and Environment | TBD | - | - |
+| 6. Physics and Input | TBD | - | - |
+| 7. Collision, Scoring, and Audio | TBD | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01, 02-01, 02-02
+- Last 5 plans: 01-01, 02-01, 02-02, 03-01, 03-02
 - Trend: -
 
 *Updated after each plan completion*
-| Phase 03-project-catalog P02 | 20 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -68,6 +78,11 @@ Progress: [██████░░░░] 67%
 - Phase 3: Math flash card game via public/projects/ directory (static asset served by Next.js)
 - [Phase 03-02]: Timer ring colors adapted to cool tones — source used warm red/orange, replaced with #9ba3ad/#c8cdd4 per no-warm-color constraint
 - [Phase 03-02]: ScoreTracker.onSave optional callback declared but unimplemented — D-11 extensibility hook for future leaderboard/auth
+- v1.1 Roadmap: Zero new npm packages — Canvas 2D, Web Audio, requestAnimationFrame, localStorage are all browser built-ins
+- v1.1 Roadmap: SSR guard (next/dynamic ssr:false) is step zero of Phase 4 — every browser API line depends on it
+- v1.1 Roadmap: Physics state must live in useRef (not useState) — architectural commitment made before loop is written
+- v1.1 Roadmap: Audio deferred to Phase 7 — most iOS-sensitive feature, deferring protects ship date
+- v1.1 Roadmap: Sound sourcing decision (real .mp3 files vs Web Audio oscillators) deferred to Phase 7 start
 
 ### Pending Todos
 
@@ -79,6 +94,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-15T16:55:16.450Z
-Stopped at: Completed 03-02-PLAN.md — Phase 3 complete
+Last session: 2026-04-15
+Stopped at: v1.1 Samus Run roadmap created — Phases 4–7 defined, files written
 Resume file: None
