@@ -8,40 +8,21 @@ A personal landing page and project hub deployed at a custom domain via GitHub +
 
 A live, publicly accessible home base that deploys cleanly from GitHub and can absorb new projects without turning into a mess.
 
-## Current Milestone: v1.1 Flappy Bird
-
-**Goal:** Add a playable Flappy Bird clone to the project catalog
-
-**Target features:**
-- Classic Flappy Bird mechanics — side-scroll, tap/click to flap, vertical pipe gaps
-- Classic colorful aesthetic (blue sky, green pipes, yellow bird)
-- Responsive canvas — fills the screen on any device (phone, tablet, desktop)
-- Local high score via localStorage — persists across sessions, no backend
-- Sound effects — flap, score point, death
-- Integrated as a new entry in the project catalog at /projects/flappy-bird
-
 ## Requirements
 
 ### Validated
 
-- Dark, minimal landing page with cool-toned color palette — no loud colors, nothing that pops (Phase 2)
-- "this is the shadow realm" header (lowercase, intentional) (Phase 2)
-- Short blurb: "my digital junk drawer." (Phase 2)
-- A graphic or visual element — subtle, nothing busy (Phase 2)
-- GitHub → Vercel CI/CD pipeline wired up and verified with a live deploy (Phase 1)
-- Project catalog section ready to receive entries (Phase 3)
-- Math flash card game integrated as first project entry (Phase 3)
+(None yet — ship to validate)
 
 ### Active
 
-- [ ] Flappy Bird clone playable at /projects/flappy-bird
-- [ ] Classic colorful aesthetic (blue sky, green pipes, yellow bird)
-- [ ] Responsive canvas fills screen on phone, tablet, desktop
-- [ ] Tap/click to flap — touch-first input
-- [ ] Classic pipe obstacle mechanics with randomized gap positions
-- [ ] Score counter during play, high score via localStorage
-- [ ] Sound effects: flap, score, death
-- [ ] New catalog entry linking to /projects/flappy-bird
+- [ ] Dark, minimal landing page with cool-toned color palette — no loud colors, nothing that pops
+- [ ] "this is the shadow realm" header (lowercase, intentional)
+- [ ] Short blurb: placeholder / project dumping ground, understated tone
+- [ ] A graphic or visual element — subtle, nothing busy
+- [ ] GitHub → Vercel CI/CD pipeline wired up and verified with a live deploy
+- [ ] Project catalog section (initially empty or placeholder) — ready to receive entries as projects ship
+- [ ] Math flash card game integrated as first project entry (simple HTML/JS, built for kids)
 
 ### Out of Scope
 
@@ -91,4 +72,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-15 — Milestone v1.1 started*
+*Last updated: 2026-04-12 after initialization*

@@ -12,4 +12,10 @@ export const projects: Project[] = [
     description: "arithmetic practice for kids. addition, subtraction, multiplication.",
     href: "/projects/math-flashcards",
   },
+  {
+    slug: "samus-run",
+    name: "samus run",
+    description: "norfair escape. dodge the rock walls.",
+    href: "/projects/samus-run",
+  },
 ];
