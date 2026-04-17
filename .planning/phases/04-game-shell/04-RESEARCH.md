@@ -332,7 +332,7 @@ Step 2.6: SKIPPED (no external dependencies — this phase is code-only, no new 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Idle screen placeholder art**
    - What we know: Phase 4 success criterion says "Samus is shown waiting for input, not a blank canvas" — but sprites are Phase 5 scope.
