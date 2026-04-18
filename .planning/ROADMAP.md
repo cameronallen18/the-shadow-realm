@@ -4,7 +4,7 @@
 
 Three phases deliver a live, minimal dark personal site with a working project catalog. Phase 1 proves the deploy chain before any content exists. Phase 2 builds the visual identity and landing page. Phase 3 adds the project catalog and integrates the math flash card game as the first live entry.
 
-Four additional phases (4-7) deliver the v1.1 Samus Run milestone: a fully playable side-scrolling browser game integrated as a new catalog entry.
+Four additional phases (4–7) deliver the v1.1 Samus Run milestone: a fully playable side-scrolling browser game integrated as a new catalog entry.
 
 ## Phases
 
@@ -92,10 +92,8 @@ Plans:
   3. Norfair environment is recognizable: dark cave background, lava detail, reddish rock wall obstacle shapes
   4. Samus varia suit sprite is visible in the idle/waiting position
   5. Samus space jump sprite appears when the jump state is forced on (verified by toggling a flag)
-**Plans:** 2 plans
-Plans:
-- [ ] 05-01-PLAN.md — Create constants and setupCanvas utility, replace placeholder div with DPR-aware canvas, wire ResizeObserver
-- [ ] 05-02-PLAN.md — Create drawing modules (environment, Samus, obstacles), wire drawScene with DEBUG_FORCE_JUMP, visual verification checkpoint
+**Plans**: TBD
+**UI hint**: yes
 
 ### Phase 6: Physics and Input
 **Goal**: Samus moves under gravity, responds to all three input methods, obstacles scroll and speed up, and the game transitions cleanly between idle and playing states
@@ -133,7 +131,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Foundation | 1/1 | Complete | 2026-04-13 |
 | 2. Landing Page | 2/2 | Complete | 2026-04-14 |
 | 3. Project Catalog | 2/2 | Complete | 2026-04-15 |
-| 4. Game Shell | 1/1 | Complete | 2026-04-17 |
-| 5. Canvas and Environment | 0/2 | Planning complete | - |
+| 4. Game Shell | 0/1 | Not started | - |
+| 5. Canvas and Environment | 0/? | Not started | - |
 | 6. Physics and Input | 0/? | Not started | - |
 | 7. Collision, Scoring, and Audio | 0/? | Not started | - |
