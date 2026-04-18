@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useReducer } from "react";
+import { useReducer, useRef, useEffect } from "react";
+import { setupCanvas } from "./canvas/setupCanvas";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -46,10 +47,44 @@ export default function SamusRunGame() {
     highScore: 0,
   });
 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    function render() {
+      const cvs = canvasRef.current;
+      if (!cvs) return;
+      const ctx = setupCanvas(cvs);
+      if (!ctx) return;
+      const rect = cvs.getBoundingClientRect();
+      // Temporary: fill with Norfair sky color to prove canvas works
+      ctx.fillStyle = "#0d0608";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    render();
+
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
+    const observer = new ResizeObserver(() => {
+      render();
+    });
+    observer.observe(parent);
+
+    return () => observer.disconnect();
+  }, [state.screen]);
+
   return (
     <div className="relative w-full h-dvh bg-black overflow-hidden">
-      {/* Placeholder canvas background (Phase 5 replaces with <canvas>) */}
-      <div className="absolute inset-0 bg-[#0a0a0a]" />
+      {/* DPR-aware canvas background (replaces Phase 4 placeholder div) */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+        style={{ imageRendering: "pixelated" }}
+      />
 
       {/* Back link — matches math-flashcards pattern exactly */}
       <Link
