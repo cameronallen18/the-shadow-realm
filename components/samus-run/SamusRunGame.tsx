@@ -1,8 +1,15 @@
 "use client";
 
+/** Set to true to force-display the jump sprite for visual testing (VIS-03). */
+const DEBUG_FORCE_JUMP = false;
+
 import Link from "next/link";
 import { useReducer, useRef, useEffect } from "react";
 import { setupCanvas } from "./canvas/setupCanvas";
+import { drawEnvironment } from "./canvas/drawEnvironment";
+import { drawSamusIdle, drawSamusJump } from "./canvas/drawSamus";
+import { drawRockWall } from "./canvas/drawObstacleShape";
+import { GAME } from "./constants";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +45,36 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
+// ── Scene drawing ──────────────────────────────────────────────────────────
+
+function drawScene(
+  ctx: CanvasRenderingContext2D,
+  screen: GameScreen,
+  width: number,
+  height: number
+): void {
+  ctx.clearRect(0, 0, width, height);
+
+  // Environment: cave background, lava, ceiling
+  drawEnvironment(ctx, width, height);
+
+  // Static obstacle placeholder (center-right of screen)
+  const obstacleX = width * GAME.obstacleXRatio;
+  const floorY = height * GAME.floorRatio;
+  drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
+
+  // Samus -- position on floor, left side of screen
+  const samusX = width * GAME.samusXRatio;
+  const samusY = floorY; // feet on the floor line
+
+  const useJump = DEBUG_FORCE_JUMP || screen === "playing";
+  if (useJump) {
+    drawSamusJump(ctx, samusX, samusY, GAME.samusScale);
+  } else {
+    drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function SamusRunGame() {
@@ -59,9 +96,7 @@ export default function SamusRunGame() {
       const ctx = setupCanvas(cvs);
       if (!ctx) return;
       const rect = cvs.getBoundingClientRect();
-      // Temporary: fill with Norfair sky color to prove canvas works
-      ctx.fillStyle = "#0d0608";
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      drawScene(ctx, state.screen, rect.width, rect.height);
     }
 
     render();
