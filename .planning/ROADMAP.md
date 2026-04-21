@@ -94,8 +94,8 @@ Plans:
   5. Samus space jump sprite appears when the jump state is forced on (verified by toggling a flag)
 **Plans:** 2 plans
 Plans:
-- [ ] 05-01-PLAN.md — Create constants and setupCanvas utility, replace placeholder div with DPR-aware canvas, wire ResizeObserver
-- [ ] 05-02-PLAN.md — Create drawing modules (environment, Samus, obstacles), wire drawScene with DEBUG_FORCE_JUMP, visual verification checkpoint
+- [x] 05-01-PLAN.md — Create constants and setupCanvas utility, replace placeholder div with DPR-aware canvas, wire ResizeObserver
+- [x] 05-02-PLAN.md — Create drawing modules (environment, Samus, obstacles), wire drawScene with DEBUG_FORCE_JUMP, visual verification checkpoint
 
 ### Phase 6: Physics and Input
 **Goal**: Samus moves under gravity, responds to all three input methods, obstacles scroll and speed up, and the game transitions cleanly between idle and playing states
