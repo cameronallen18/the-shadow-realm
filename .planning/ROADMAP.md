@@ -107,7 +107,10 @@ Plans:
   3. Scroll speed noticeably increases after approximately every 10 obstacles cleared
   4. The first valid input (any of: tap, click, Spacebar, arrow key) transitions the screen from idle to active play
   5. Physics run at consistent speed on both a 60Hz laptop and a 120Hz iPad (delta-time verified)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 06-01-PLAN.md — Create PHYSICS constants and pure gameLoop.ts module (types, gravity, jump, obstacle scrolling, speed progression)
+- [ ] 06-02-PLAN.md — Wire rAF game loop, unified input handlers, and dynamic drawScene into SamusRunGame.tsx; visual gameplay verification
 
 ### Phase 7: Collision, Scoring, and Audio
 **Goal**: The game is fully winnable and losable — Samus scores points for clearing gaps, dies on collision, the high score persists, and all sound effects fire on the correct events
@@ -135,5 +138,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Project Catalog | 2/2 | Complete | 2026-04-15 |
 | 4. Game Shell | 1/1 | Complete | 2026-04-17 |
 | 5. Canvas and Environment | 0/2 | Planning complete | - |
-| 6. Physics and Input | 0/? | Not started | - |
+| 6. Physics and Input | 0/2 | Planning complete | - |
 | 7. Collision, Scoring, and Audio | 0/? | Not started | - |
