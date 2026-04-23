@@ -1,15 +1,13 @@
 "use client";
 
-/** Set to true to force-display the jump sprite for visual testing (VIS-03). */
-const DEBUG_FORCE_JUMP = false;
-
 import Link from "next/link";
-import { useReducer, useRef, useEffect } from "react";
+import { useReducer, useRef, useEffect, useCallback } from "react";
 import { setupCanvas } from "./canvas/setupCanvas";
 import { drawEnvironment } from "./canvas/drawEnvironment";
 import { drawSamusIdle, drawSamusJump } from "./canvas/drawSamus";
 import { drawRockWall } from "./canvas/drawObstacleShape";
-import { GAME } from "./constants";
+import { PHYSICS, GAME } from "./constants";
+import { GamePhysicsState, createInitialGameState, updateGame, triggerJump } from "./gameLoop";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -51,26 +49,31 @@ function drawScene(
   ctx: CanvasRenderingContext2D,
   screen: GameScreen,
   width: number,
-  height: number
+  height: number,
+  physics?: GamePhysicsState
 ): void {
   ctx.clearRect(0, 0, width, height);
-
-  // Environment: cave background, lava, ceiling
   drawEnvironment(ctx, width, height);
 
-  // Static obstacle placeholder (center-right of screen)
-  const obstacleX = width * GAME.obstacleXRatio;
-  const floorY = height * GAME.floorRatio;
-  drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
-
-  // Samus -- position on floor, left side of screen
-  const samusX = width * GAME.samusXRatio;
-  const samusY = floorY; // feet on the floor line
-
-  const useJump = DEBUG_FORCE_JUMP || screen === "playing";
-  if (useJump) {
-    drawSamusJump(ctx, samusX, samusY, GAME.samusScale);
+  if (physics && screen === "playing") {
+    // Dynamic obstacle positions from physics state
+    for (const obs of physics.obstacles) {
+      drawRockWall(ctx, obs.x, obs.gapTop, obs.gapBottom, GAME.obstacleWidth, height);
+    }
+    // Samus at physics-driven position
+    const samusX = width * GAME.samusXRatio;
+    const useJump = physics.samusVY < 0; // moving upward = jump sprite
+    if (useJump) {
+      drawSamusJump(ctx, samusX, physics.samusY, GAME.samusScale);
+    } else {
+      drawSamusIdle(ctx, samusX, physics.samusY, GAME.samusScale);
+    }
   } else {
+    // Static idle/gameover scene (Phase 5 behavior preserved)
+    const obstacleX = width * GAME.obstacleXRatio;
+    drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
+    const samusX = width * GAME.samusXRatio;
+    const samusY = height * GAME.floorRatio;
     drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
   }
 }
@@ -85,8 +88,20 @@ export default function SamusRunGame() {
   });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameRef = useRef<GamePhysicsState | null>(null);
+  const screenRef = useRef<GameScreen>(state.screen);
+  const canvasWidthRef = useRef(0);
+  const canvasHeightRef = useRef(0);
 
+  // Screen-ref mirror — keeps screenRef in sync without stale closure issues
   useEffect(() => {
+    screenRef.current = state.screen;
+  }, [state.screen]);
+
+  // Effect A: Static render + ResizeObserver (idle and gameover states)
+  useEffect(() => {
+    if (state.screen === "playing") return; // rAF loop handles rendering during play
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -96,6 +111,8 @@ export default function SamusRunGame() {
       const ctx = setupCanvas(cvs);
       if (!ctx) return;
       const rect = cvs.getBoundingClientRect();
+      canvasWidthRef.current = rect.width;
+      canvasHeightRef.current = rect.height;
       drawScene(ctx, state.screen, rect.width, rect.height);
     }
 
@@ -103,14 +120,110 @@ export default function SamusRunGame() {
 
     const parent = canvas.parentElement;
     if (!parent) return;
-
-    const observer = new ResizeObserver(() => {
-      render();
-    });
+    const observer = new ResizeObserver(() => render());
     observer.observe(parent);
-
     return () => observer.disconnect();
   }, [state.screen]);
+
+  // Effect B: rAF game loop (playing state only)
+  useEffect(() => {
+    if (state.screen !== "playing") return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Initialize fresh game state
+    const rect = canvas.getBoundingClientRect();
+    canvasWidthRef.current = rect.width;
+    canvasHeightRef.current = rect.height;
+    gameRef.current = createInitialGameState(rect.width, rect.height);
+
+    // If the first input flagged a pending jump, apply it
+    if (gameRef.current) {
+      gameRef.current.pendingJump = true;
+    }
+
+    let rafId: number;
+    let lastTs: number | null = null;
+
+    function loop(ts: number) {
+      const game = gameRef.current;
+      if (!game) return;
+
+      const dt = lastTs === null ? 0 : Math.min((ts - lastTs) / 1000, PHYSICS.dtCap);
+      lastTs = ts;
+
+      updateGame(game, dt, canvasWidthRef.current, canvasHeightRef.current);
+
+      const cvs = canvasRef.current;
+      if (cvs) {
+        const ctx = setupCanvas(cvs);
+        if (ctx) {
+          const r = cvs.getBoundingClientRect();
+          canvasWidthRef.current = r.width;
+          canvasHeightRef.current = r.height;
+          drawScene(ctx, "playing", r.width, r.height, game);
+        }
+      }
+
+      // Check game over (floor fall-through or future collision)
+      if (game.gameOver) {
+        dispatch({ type: "GAME_OVER", score: game.obstaclesCleared });
+        return; // stop loop
+      }
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [state.screen]);
+
+  // Unified input handler — reads screenRef to avoid stale closure
+  const handleInput = useCallback(() => {
+    if (screenRef.current === "idle") {
+      dispatch({ type: "START" });
+      // pendingJump is set in the rAF effect when it initializes gameRef
+    } else if (screenRef.current === "playing") {
+      const game = gameRef.current;
+      if (game) {
+        triggerJump(game);
+      }
+    }
+    // gameover: do nothing — restart button handles it
+  }, []);
+
+  // Input listener registration (mount-only)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.code === "Space" || e.code === "ArrowUp") {
+        e.preventDefault(); // prevent page scroll on Space
+        handleInput();
+      }
+    }
+
+    function onClick() {
+      handleInput();
+    }
+
+    function onTouchStart(e: TouchEvent) {
+      e.preventDefault(); // prevent scroll, double-tap zoom
+      handleInput();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    canvas.addEventListener("click", onClick);
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      canvas.removeEventListener("click", onClick);
+      canvas.removeEventListener("touchstart", onTouchStart);
+    };
+  }, [handleInput]);
 
   return (
     <div className="relative w-full h-dvh bg-black overflow-hidden">
