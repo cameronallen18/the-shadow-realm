@@ -30,12 +30,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "START":
       return { ...state, screen: "playing", score: 0 };
-    case "GAME_OVER":
+    case "GAME_OVER": {
+      const newHigh = Math.max(state.highScore, action.score);
+      if (typeof window !== "undefined" && newHigh > state.highScore) {
+        localStorage.setItem("samusRunHighScore", String(newHigh));
+      }
       return {
         screen: "gameover",
         score: action.score,
-        highScore: Math.max(state.highScore, action.score),
+        highScore: newHigh,
       };
+    }
     case "RESTART":
       return { ...state, screen: "idle" };
     default:
@@ -81,10 +86,13 @@ function drawScene(
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function SamusRunGame() {
-  const [state, dispatch] = useReducer(gameReducer, {
-    screen: "idle",
-    score: 0,
-    highScore: 0,
+  const [state, dispatch] = useReducer(gameReducer, null, () => {
+    let stored = 0;
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("samusRunHighScore");
+      if (raw !== null) stored = parseInt(raw, 10) || 0;
+    }
+    return { screen: "idle" as GameScreen, score: 0, highScore: stored };
   });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -92,6 +100,8 @@ export default function SamusRunGame() {
   const screenRef = useRef<GameScreen>(state.screen);
   const canvasWidthRef = useRef(0);
   const canvasHeightRef = useRef(0);
+  const scoreRef = useRef(0);
+  const scoreDisplayRef = useRef<HTMLDivElement>(null);
 
   // Screen-ref mirror — keeps screenRef in sync without stale closure issues
   useEffect(() => {
@@ -154,6 +164,12 @@ export default function SamusRunGame() {
       lastTs = ts;
 
       updateGame(game, dt, canvasWidthRef.current, canvasHeightRef.current);
+
+      // Sync live score ref and DOM display (avoids React re-render per frame)
+      scoreRef.current = game.obstaclesCleared;
+      if (scoreDisplayRef.current) {
+        scoreDisplayRef.current.textContent = String(game.obstaclesCleared);
+      }
 
       const cvs = canvasRef.current;
       if (cvs) {
@@ -258,10 +274,13 @@ export default function SamusRunGame() {
         </div>
       )}
 
-      {/* Overlay: playing HUD */}
+      {/* Overlay: playing HUD — score updated via DOM ref each rAF frame */}
       {state.screen === "playing" && (
-        <div className="absolute top-4 right-4 text-[#9ba3ad] text-xs font-mono tabular-nums z-10">
-          {state.score}
+        <div
+          ref={scoreDisplayRef}
+          className="absolute top-4 right-4 text-[#9ba3ad] text-xs font-mono tabular-nums z-10"
+        >
+          0
         </div>
       )}
 
@@ -270,6 +289,9 @@ export default function SamusRunGame() {
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10">
           <p className="text-[#ededed] text-sm">game over</p>
           <p className="text-[#9ba3ad] text-xs font-mono tabular-nums">{state.score}</p>
+          {state.score > 0 && state.score >= state.highScore && (
+            <p className="text-[#9ba3ad] text-xs">new best</p>
+          )}
           <p className="text-[#9ba3ad] text-xs font-mono tabular-nums">
             best: {state.highScore}
           </p>
