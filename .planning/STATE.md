@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Samus Run
 status: executing
-stopped_at: v1.1 Samus Run roadmap created — Phases 4–7 defined, files written
-last_updated: "2026-04-21T04:27:21.645Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-04-23T15:42:00.497Z"
 last_activity: 2026-04-21
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
   percent: 100
 ---
 
@@ -65,6 +65,7 @@ Progress (v1.1): [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 06-physics-and-input P02 | 10 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Progress (v1.1): [░░░░░░░░░░] 0%
 - v1.1 Roadmap: Physics state must live in useRef (not useState) — architectural commitment made before loop is written
 - v1.1 Roadmap: Audio deferred to Phase 7 — most iOS-sensitive feature, deferring protects ship date
 - v1.1 Roadmap: Sound sourcing decision (real .mp3 files vs Web Audio oscillators) deferred to Phase 7 start
+- [Phase 06-02]: screenRef mirrors state.screen so mount-only input listeners read current screen without stale closure
+- [Phase 06-02]: Two separate useEffects (static render vs rAF loop) with independent cleanup paths prevent cross-state rendering leaks
+- [Phase 06-02]: pendingJump=true set at rAF init so the START-triggering input causes immediate jump without second keypress
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-15
-Stopped at: v1.1 Samus Run roadmap created — Phases 4–7 defined, files written
+Last session: 2026-04-23T15:41:55.036Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
