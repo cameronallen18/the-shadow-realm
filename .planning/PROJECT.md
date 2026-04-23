@@ -18,6 +18,7 @@ A live, publicly accessible home base that deploys cleanly from GitHub and can a
 - [x] Math flash card game as first project entry — validated in Phase 3
 - [x] Samus Run game shell entry in catalog, linking to /projects/samus-run — validated in Phase 4
 - [x] Samus Run canvas fills viewport on all devices, DPR-aware, Norfair environment drawn with both Samus sprite states — validated in Phase 5
+- [x] Samus moves under gravity, responds to keyboard/mouse/touch input, obstacles scroll with randomized gaps and speed progression — validated in Phase 6
 
 ### Active
 
@@ -77,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-20 after Phase 5 (Canvas and Environment) completion*
+*Last updated: 2026-04-23 after Phase 6 (Physics and Input) completion*
