@@ -122,7 +122,10 @@ Plans:
   3. The highest score ever achieved persists after a page reload and is shown on idle and game-over screens
   4. A jump sound, a score sound, and a death sound each play at the correct moment
   5. All sounds play on iOS Safari after the first tap (AudioContext unlocked on first user gesture)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — Add AABB collision detection (65% hitbox), per-gap scoring, live score HUD, localStorage high score persistence, and "new best" label
+- [ ] 07-02-PLAN.md — Create Web Audio oscillator sounds (jump/score/death) and wire into game events with iOS AudioContext unlock
 
 ---
 
@@ -139,4 +142,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Game Shell | 1/1 | Complete | 2026-04-17 |
 | 5. Canvas and Environment | 0/2 | Planning complete | - |
 | 6. Physics and Input | 2/2 | Complete   | 2026-04-23 |
-| 7. Collision, Scoring, and Audio | 0/? | Not started | - |
+| 7. Collision, Scoring, and Audio | 0/2 | Planning complete | - |
