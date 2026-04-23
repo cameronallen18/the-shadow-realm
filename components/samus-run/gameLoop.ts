@@ -95,6 +95,7 @@ export function updateGame(
   // e. Ceiling clamp
   if (state.samusY <= 0) {
     state.samusY = 0;
+    state.samusVY = 0;
   }
 
   // f. Collision detection and per-gap scoring (between clamp and scroll per D-04/D-06)
