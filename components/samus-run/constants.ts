@@ -41,3 +41,10 @@ export const PHYSICS = {
 
 // Horizontal spacing between obstacles in the pool (CSS px multiplier of canvasWidth)
 export const OBSTACLE_SPACING_RATIO = 0.6;
+
+// Collision hitbox — reduced to ~65% of sprite size per D-04 (60-70% range)
+export const COLLISION = {
+  hitboxScale: 0.65,   // 65% of sprite size per D-04 (~60-70% range)
+  samusWidth: 28,      // approximate sprite width in CSS pixels (from drawSamus dimensions)
+  samusHeight: 36,     // approximate sprite height in CSS pixels (from drawSamus dimensions)
+} as const;

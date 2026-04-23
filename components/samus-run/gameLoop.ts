@@ -1,4 +1,4 @@
-import { PHYSICS, GAME, OBSTACLE_SPACING_RATIO } from "./constants";
+import { PHYSICS, GAME, OBSTACLE_SPACING_RATIO, COLLISION } from "./constants";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -97,7 +97,49 @@ export function updateGame(
     state.samusY = 0;
   }
 
-  // f. Obstacle scrolling
+  // f. Collision detection and per-gap scoring (between clamp and scroll per D-04/D-06)
+  {
+    const samusX = canvasWidth * GAME.samusXRatio;
+    const hw = COLLISION.samusWidth * COLLISION.hitboxScale;
+    const hh = COLLISION.samusHeight * COLLISION.hitboxScale;
+    const offsetX = (COLLISION.samusWidth - hw) / 2;
+    const offsetY = (COLLISION.samusHeight - hh) / 2;
+
+    // Samus hitbox (reduced, centered)
+    const sLeft = samusX - COLLISION.samusWidth / 2 + offsetX;
+    const sRight = sLeft + hw;
+    const sTop = state.samusY - COLLISION.samusHeight / 2 + offsetY;
+    const sBottom = sTop + hh;
+
+    for (const obs of state.obstacles) {
+      const oLeft = obs.x;
+      const oRight = obs.x + GAME.obstacleWidth;
+
+      // Horizontal overlap check
+      if (sRight > oLeft && sLeft < oRight) {
+        // Samus overlaps obstacle column — check if inside gap
+        if (sTop < obs.gapTop || sBottom > obs.gapBottom) {
+          state.gameOver = true;
+          return; // stop processing — game is over
+        }
+      }
+
+      // Scoring: Samus has fully passed the obstacle's right edge (per D-06)
+      if (!obs.scored && sLeft > oRight) {
+        obs.scored = true;
+        state.obstaclesCleared++;
+        // Speed progression check moved here (increments on actual gaps cleared)
+        if (state.obstaclesCleared > 0 && state.obstaclesCleared % 10 === 0) {
+          state.speedMultiplier = Math.min(
+            state.speedMultiplier + PHYSICS.speedIncrement,
+            PHYSICS.maxSpeedMultiplier
+          );
+        }
+      }
+    }
+  }
+
+  // g. Obstacle scrolling
   const speed = PHYSICS.baseScrollSpeed * state.speedMultiplier;
   for (const obs of state.obstacles) {
     obs.x -= speed * dt;
@@ -109,15 +151,8 @@ export function updateGame(
       obs.gapTop = gap.gapTop;
       obs.gapBottom = gap.gapBottom;
       obs.scored = false;
-
-      // Count and update speed
-      state.obstaclesCleared++;
-      if (state.obstaclesCleared > 0 && state.obstaclesCleared % 10 === 0) {
-        state.speedMultiplier = Math.min(
-          state.speedMultiplier + PHYSICS.speedIncrement,
-          PHYSICS.maxSpeedMultiplier
-        );
-      }
+      // NOTE: obstaclesCleared is incremented in the scoring block above (when Samus passes),
+      // not here on recycle — prevents double-counting and aligns score with player action.
     }
   }
 }
