@@ -27,3 +27,17 @@ export const GAME = {
   obstacleWidth: 40,       // rock wall column width in CSS pixels
   samusScale: 1,           // sprite scale multiplier
 } as const;
+
+// Physics tuning — all values in CSS pixels or CSS pixels/second
+export const PHYSICS = {
+  gravity: 1200,            // CSS px/s^2 — downward acceleration
+  jumpVelocity: 520,        // CSS px/s — upward velocity applied on tap (Flappy Bird style)
+  terminalVelocity: 900,    // CSS px/s — max downward speed
+  baseScrollSpeed: 220,     // CSS px/s — obstacle scroll speed at multiplier=1
+  speedIncrement: 0.15,     // added to speedMultiplier every 10 obstacles cleared
+  maxSpeedMultiplier: 2.5,  // cap — game becomes unplayable beyond ~2.5x
+  dtCap: 0.05,              // max delta-time in seconds (prevents teleport on tab-switch)
+} as const;
+
+// Horizontal spacing between obstacles in the pool (CSS px multiplier of canvasWidth)
+export const OBSTACLE_SPACING_RATIO = 0.6;
