@@ -8,6 +8,7 @@ import { drawSamusIdle, drawSamusJump } from "./canvas/drawSamus";
 import { drawRockWall } from "./canvas/drawObstacleShape";
 import { PHYSICS, GAME } from "./constants";
 import { GamePhysicsState, createInitialGameState, updateGame, triggerJump } from "./gameLoop";
+import { AudioManager, createAudioManager } from "./audioManager";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,7 @@ export default function SamusRunGame() {
   const canvasHeightRef = useRef(0);
   const scoreRef = useRef(0);
   const scoreDisplayRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<AudioManager | null>(null);
 
   // Screen-ref mirror — keeps screenRef in sync without stale closure issues
   useEffect(() => {
@@ -155,6 +157,7 @@ export default function SamusRunGame() {
 
     let rafId: number;
     let lastTs: number | null = null;
+    let lastScore = 0;
 
     function loop(ts: number) {
       const game = gameRef.current;
@@ -171,6 +174,12 @@ export default function SamusRunGame() {
         scoreDisplayRef.current.textContent = String(game.obstaclesCleared);
       }
 
+      // Score sound — fires when obstaclesCleared increments
+      if (game.obstaclesCleared > lastScore) {
+        lastScore = game.obstaclesCleared;
+        audioRef.current?.playScore();
+      }
+
       const cvs = canvasRef.current;
       if (cvs) {
         const ctx = setupCanvas(cvs);
@@ -184,6 +193,7 @@ export default function SamusRunGame() {
 
       // Check game over (floor fall-through or future collision)
       if (game.gameOver) {
+        audioRef.current?.playDeath();
         dispatch({ type: "GAME_OVER", score: game.obstaclesCleared });
         return; // stop loop
       }
@@ -197,6 +207,11 @@ export default function SamusRunGame() {
 
   // Unified input handler — reads screenRef to avoid stale closure
   const handleInput = useCallback(() => {
+    // Lazily create AudioManager on first user gesture (iOS AudioContext unlock per D-03)
+    if (!audioRef.current) {
+      audioRef.current = createAudioManager();
+    }
+
     if (screenRef.current === "idle") {
       dispatch({ type: "START" });
       // pendingJump is set in the rAF effect when it initializes gameRef
@@ -204,6 +219,7 @@ export default function SamusRunGame() {
       const game = gameRef.current;
       if (game) {
         triggerJump(game);
+        audioRef.current.playJump();
       }
     }
     // gameover: do nothing — restart button handles it
