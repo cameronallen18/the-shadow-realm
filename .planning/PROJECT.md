@@ -8,6 +8,16 @@ A personal landing page and project hub deployed at a custom domain via GitHub +
 
 A live, publicly accessible home base that deploys cleanly from GitHub and can absorb new projects without turning into a mess.
 
+## Current Milestone: v1.2 Pixel Perfect
+
+**Goal:** Replace placeholder graphics with authentic Super Metroid assets so the game looks and feels like the real thing.
+
+**Target features:**
+- Real Samus sprites: idle/breathing animation, jump frames, screw attack frames
+- Canvas-based sprite animation system (frame sequencing, no new npm packages)
+- One Super Metroid level environment (background + obstacle textures) — Norfair, Brinstar, or Maridia chosen after research
+- Research phase scouts sprite rip sources and documents exact download URLs
+
 ## Requirements
 
 ### Validated
@@ -21,15 +31,12 @@ A live, publicly accessible home base that deploys cleanly from GitHub and can a
 - [x] Samus moves under gravity, responds to keyboard/mouse/touch input, obstacles scroll with randomized gaps and speed progression — validated in Phase 6
 - [x] Samus Run game fully winnable/losable — AABB collision, per-gap scoring, live HUD, localStorage high score, Web Audio sounds — validated in Phase 7
 
-### Active
+### Active (v1.2)
 
-- [ ] Dark, minimal landing page with cool-toned color palette — no loud colors, nothing that pops
-- [ ] "this is the shadow realm" header (lowercase, intentional)
-- [ ] Short blurb: placeholder / project dumping ground, understated tone
-- [ ] A graphic or visual element — subtle, nothing busy
-- [ ] GitHub → Vercel CI/CD pipeline wired up and verified with a live deploy
-- [ ] Project catalog section (initially empty or placeholder) — ready to receive entries as projects ship
-- [ ] Math flash card game integrated as first project entry (simple HTML/JS, built for kids)
+- [ ] Samus Run uses real Super Metroid idle/breathing sprite animation
+- [ ] Samus Run uses real jump animation frames from Super Metroid
+- [ ] Samus Run uses real screw attack animation frames from Super Metroid
+- [ ] Canvas renders one authentic Super Metroid level environment (background + obstacle textures)
 
 ### Out of Scope
 
@@ -79,4 +86,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-23 after Phase 6 (Physics and Input) completion*
+*Last updated: 2026-04-24 — v1.2 Pixel Perfect milestone started*
