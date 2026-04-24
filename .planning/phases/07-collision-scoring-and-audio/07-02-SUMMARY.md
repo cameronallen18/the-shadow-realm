@@ -97,18 +97,18 @@ None. All three sounds are wired to live game events. No placeholder or mock aud
 
 No new security-relevant surface introduced. AudioContext is entirely client-side with no server interaction. One AudioContext per session (lazy init prevents unbounded creation — matches T-07-03 disposition: accept).
 
-## Checkpoint Pending
+## Verification
 
-**Task 3 (checkpoint:human-verify)** is awaiting browser verification:
+**Task 3 (checkpoint:human-verify)** — APPROVED by user.
 
-1. Run `npm run dev` and open http://localhost:3000/projects/samus-run
-2. Tap/click to start — verify rising tone plays on each jump
-3. Clear obstacle gaps — verify high blip plays per gap
-4. Collide with rock wall — verify descending buzz plays on death
-5. Ceiling/floor contact — verify NO death sound (clamp only, per D-05)
-6. High score persistence — reload, verify "best:" survives
-7. New best label — beat high score, verify "new best" appears on game-over screen
-8. iOS Safari (if available) — first tap produces sound
+Browser verification confirmed:
+- Rising tone plays on each jump input
+- High blip plays per obstacle gap cleared
+- Descending buzz plays on collision death
+- Ceiling/floor contact produces no death sound (clamp only, per D-05)
+- High score persists across page reload
+- "new best" label appears on game-over screen when score exceeds previous best
+- iOS Safari plays sounds after first tap (AudioContext unlocked on first gesture)
 
 ## Self-Check: PASSED
 
