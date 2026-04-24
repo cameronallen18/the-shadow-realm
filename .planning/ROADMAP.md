@@ -141,12 +141,13 @@ Plans:
 **Depends on**: Phase 7
 **Requirements**: ASSET-01, ASSET-02
 **Success Criteria** (what must be TRUE):
-  1. `public/sprites/samus.png` and `public/sprites/norfair-bg.png` return HTTP 200 in the browser network tab on the Vercel production URL
+  1. `public/sprites/samus.png` and `public/sprites/norfair_upper.png` return HTTP 200 in the browser network tab on the Vercel production URL
   2. A `loadSprites()` function (or equivalent) loads both images via `Promise.all` and stores them in a `useRef` — no new npm packages introduced
   3. The game renders identically to before this phase (no visual change); the fallback shape Samus is still displayed
   4. Human checkpoint confirmed: user has downloaded PNGs from Spriters Resource and committed them to `public/sprites/`
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 1 plan
+Plans:
+- [ ] 08-01-PLAN.md — Add SPRITE_LAYOUT constants and spritesRef + Effect D (image load + magenta-to-alpha conversion) to SamusRunGame.tsx
 
 ### Phase 9: Sprite Animation
 **Goal**: Samus renders from the real sprite sheet with correct animation for every game state, hitbox constants match the real sprite body, and pixel-perfect scaling is enforced
@@ -190,6 +191,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Canvas and Environment | 0/2 | Planning complete | - |
 | 6. Physics and Input | 2/2 | Complete | 2026-04-23 |
 | 7. Collision, Scoring, and Audio | 2/2 | Complete | 2026-04-24 |
-| 8. Asset Pipeline | 0/? | Not started | - |
+| 8. Asset Pipeline | 0/1 | Planning complete | - |
 | 9. Sprite Animation | 0/? | Not started | - |
 | 10. Background Scroll | 0/? | Not started | - |
