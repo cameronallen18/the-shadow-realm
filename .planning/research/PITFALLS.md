@@ -1,272 +1,343 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Next.js static site / personal hub on Vercel
-**Researched:** 2026-04-12
-**Confidence:** HIGH (most pitfalls verified against official Next.js docs and Vercel docs)
+**Domain:** Adding sprite sheet animation and level backgrounds to an existing rAF-based canvas game
+**Researched:** 2026-04-24
+**Confidence:** HIGH (pitfalls verified against MDN, web.dev, WebKit bug tracker, and direct analysis of the existing codebase)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause broken deploys, broken routing, or require a rewrite to fix.
-
----
-
-### Pitfall 1: Using `next export` (the CLI command) Instead of `output: 'export'` in next.config
-
-**What goes wrong:** In Next.js 13+ App Router, the old `next export` command was deprecated and removed. Running it produces an error. Projects that copy old tutorials will wire up the wrong command in their build script or CI.
-
-**Why it happens:** Most tutorials and Stack Overflow answers written before 2023 reference `next export` as the way to produce a static build. The App Router replaced this with a config flag.
-
-**Consequences:** Build fails. Vercel deploy fails. Confusion when the error message doesn't clearly explain the migration path.
-
-**Prevention:** Set `output: 'export'` in `next.config.js` (or `next.config.ts`) and use `next build` as the only build command. Never add `next export` to any script.
-
-```js
-// next.config.js
-const nextConfig = {
-  output: 'export',
-}
-module.exports = nextConfig
-```
-
-**Detection:** Build log contains `Error: 'next export' is no longer supported...` or similar. Vercel build step exits with a non-zero code immediately.
-
----
-
-### Pitfall 2: `next/image` Breaks With `output: 'export'` (Default Loader Incompatibility)
-
-**What goes wrong:** The default `next/image` component relies on a server-side image optimization endpoint (`/_next/image`). With `output: 'export'`, there is no server, so this endpoint does not exist. Any page using `<Image>` without disabling optimization will throw a build error.
-
-**Why it happens:** `next/image` is designed for server-rendered or Vercel-hosted deployments. The static export mode cannot generate optimized image variants at request time.
-
-**Consequences:** Build errors on any page that uses `<Image>` without the `unoptimized` prop or a custom loader. Images simply fail to render.
-
-**Prevention:** Add `images: { unoptimized: true }` to `next.config.js` for a static export. For a personal site with a handful of images this is the correct tradeoff — no optimization overhead, no extra dependencies.
-
-```js
-const nextConfig = {
-  output: 'export',
-  images: {
-    unoptimized: true,
-  },
-}
-module.exports = nextConfig
-```
-
-Alternatively, use plain `<img>` tags for simple cases (a personal site logo or graphic does not need `next/image`).
-
-**Detection:** Build output contains `Error: Image Optimization using the default loader is not compatible with next export`.
-
----
-
-### Pitfall 3: Public-Folder HTML File Name Collides With a Next.js Route
-
-**What goes wrong:** Next.js enforces that no file in `/public` can share a name with a page route. If the math flash card game lives at `/public/flashcards.html` and there is also an `app/flashcards/` route (or vice versa), the build throws a hard error.
-
-**Why it happens:** Both the public file and the Next.js route would resolve to the same URL path. Next.js cannot distinguish which one to serve.
-
-**Consequences:** Build fails with `Error: You cannot define a route with the same name as a public file`. This is a hard stop — no deploy happens.
-
-**Prevention:** Put standalone HTML projects in a named subdirectory that has no corresponding Next.js route. For the math flash card game, use `/public/games/flashcards/index.html` or `/public/games/math/`. The Next.js app would then link to `/games/flashcards/index.html` directly. Never use a flat name in `/public` that matches an existing or planned route.
-
-**Detection:** Build output contains `conflicting-public-file-page` error message.
-
----
-
-### Pitfall 4: Tailwind CSS v4 Config Format Is Completely Different From v3
-
-**What goes wrong:** Tailwind CSS v4 (released January 2025) replaced `tailwind.config.js` and the `@tailwind` directives with a CSS-first `@import "tailwindcss"` and `@theme` configuration in the CSS file. The old PostCSS plugin `tailwindcss` was replaced by `@tailwindcss/postcss`. Projects initialized from v3 tutorials or created before 2025 will fail to apply styles or fail to build.
-
-**Why it happens:** v4 is a near-total rewrite of the configuration model. Old tutorials, boilerplates, and `create-next-app` templates may still scaffold a v3-style setup.
-
-**Consequences:** Styles silently not applying in production (the classic "works in dev, broken in prod"), or a build failure on the PostCSS plugin step.
-
-**Prevention:**
-- Verify installed Tailwind version with `npm ls tailwindcss`.
-- For v4: install `@tailwindcss/postcss`, configure `postcss.config.mjs` with `{ plugins: { '@tailwindcss/postcss': {} } }`, and use `@import "tailwindcss";` in the global CSS file. No `tailwind.config.js` needed for basic usage.
-- For v3: use `tailwind.config.js` with correct `content` paths (see Pitfall 5).
-- Do not mix v3 and v4 patterns — pick one and stay consistent.
-
-**Detection:** No Tailwind classes apply in dev or prod. Missing `@tailwind base/components/utilities` error. PostCSS plugin resolution error at build time.
-
----
-
-### Pitfall 5: Tailwind CSS Purges All Classes Because `content` Paths Are Too Narrow (v3)
-
-**What goes wrong:** If using Tailwind v3 and the `content` array in `tailwind.config.js` does not include all files that contain class names, those classes get purged in the production build. The site looks correct in development (JIT mode scans files) but all styling breaks in the Vercel deploy.
-
-**Why it happens:** The default `content` from older scaffolds often targets only `./pages/**/*.{js,ts,jsx,tsx}` and misses `./app/**/*`, `./components/**/*`, or the `src/` directory.
-
-**Consequences:** Production build renders completely unstyled. Highly confusing because local dev (`next dev`) looks fine.
-
-**Prevention:** For an App Router project with Tailwind v3, use:
-```js
-content: [
-  './app/**/*.{js,ts,jsx,tsx,mdx}',
-  './components/**/*.{js,ts,jsx,tsx,mdx}',
-  './src/**/*.{js,ts,jsx,tsx,mdx}',
-],
-```
-Never construct Tailwind class names dynamically with template literals (e.g., `` `bg-${color}-500` `` — the string `bg-gray-500` will never appear in source and will be purged). Use full class strings in conditionals.
-
-**Detection:** Production site renders plain HTML with no styles. Dev server renders correctly. Run `next build` locally and check the output.
-
----
-
-## Moderate Pitfalls
-
----
-
-### Pitfall 6: Dark Mode Hydration Mismatch (Flash of Unstyled/Wrong Theme)
-
-**What goes wrong:** If dark mode is toggled via a class on `<html>` (Tailwind's `darkMode: 'class'` strategy) and the default theme is determined client-side (reading `localStorage` or `prefers-color-scheme`), SSG will render the page without the `dark` class. On hydration the class is added, causing a visible flash from light to dark.
-
-**Why it happens:** The server (and static export) has no access to the user's preference. The first HTML served is always theme-neutral.
-
-**Consequences:** Visible flash on every page load for users whose OS is in dark mode. Hydration mismatch warnings in the console. For a site that is permanently dark this is mostly avoidable.
-
-**Prevention:** Since this site is intentionally always dark — not a toggle — apply the `dark` class directly on `<html>` in `layout.tsx` as a static attribute. Do not use `next-themes` or any dynamic theme provider. Hard-code the design in Tailwind dark-variant classes or just use the base palette directly. No hydration issue arises when the theme never changes.
-
-```tsx
-// app/layout.tsx
-<html lang="en" className="dark">
-```
-
-If a toggle is ever added later, add `suppressHydrationWarning` to `<html>` and initialize with a blocking inline script (next-themes handles this).
-
-**Detection:** Brief flash of light background on page load. Hydration mismatch warning in browser console.
-
----
-
-### Pitfall 7: Vercel Ignores `output: 'export'` and Runs Node.js Build Anyway
-
-**What goes wrong:** When deploying to Vercel, the platform auto-detects Next.js and uses its own build system, which does not require `output: 'export'` to be set. If someone sets `output: 'export'` but Vercel is configured to use the default Next.js preset, they can get surprising behavior — Vercel may deploy in server mode even when the developer expected a static export.
-
-**Why it happens:** Vercel natively supports Next.js including server-rendered routes. `output: 'export'` tells Next.js to emit a static `out/` directory, but Vercel uses its own Next.js adapter and may not read the static output directory as expected.
-
-**Consequences:** The site deploys and works — Vercel just runs it in server mode (which is fine). The issue is when the developer assumes static-only guarantees (e.g., no API routes, no server functions) but has actually deployed a server-capable app.
-
-**Prevention:** For this project the simplest approach is to let Vercel handle the deployment normally (no `output: 'export'` needed — Vercel serves static pages as static). Only set `output: 'export'` if deploying to a non-Vercel static host. On Vercel, a standard `next build` with the default Next.js preset is correct and handles SSG pages as static without any server running for them.
-
-**Detection:** No obvious error. Check the Vercel deployment logs to confirm whether it deployed as "Static" or "Serverless."
-
----
-
-### Pitfall 8: DNS Setup — CNAME on Apex Domain, or Including the Domain in the Record Name
-
-**What goes wrong:** Two common DNS mistakes when pointing a custom domain at Vercel:
-1. Setting a CNAME record on the apex/root domain (`example.com` not `www.example.com`). Most DNS providers do not allow CNAME on the apex — use an A record pointing to Vercel's IP instead.
-2. Writing the full domain name in the DNS record's "Name" field (e.g., writing `www.example.com` instead of just `www`). The registrar appends the domain automatically, resulting in `www.example.com.example.com`.
-
-**Why it happens:** Vercel's DNS setup instructions are clear, but the UI of different domain registrars varies and confuses the distinction between "Name" (relative label) and "Value" (target).
-
-**Consequences:** Domain never resolves. SSL certificate provisioning fails. Vercel dashboard shows "Invalid Configuration."
-
-**Prevention:**
-- Apex domain (`example.com`): Add an A record pointing to Vercel's IP (`76.76.21.21`).
-- Subdomain (`www.example.com`): Add a CNAME pointing to `cname.vercel-dns.com`.
-- In the "Name" field, write only the subdomain label (e.g., `www`), not the full domain.
-- After changing records, DNS propagation can take 24–48 hours for nameserver changes. Reduce TTL to 60s before making changes to speed up cutover.
-
-**Detection:** Vercel domain dashboard shows red "Invalid Configuration." `dig example.com` returns no A record or wrong IP.
-
----
-
-### Pitfall 9: `trailingSlash` + Custom 404 Page = Broken 404 in Static Export
-
-**What goes wrong:** When both `trailingSlash: true` and `output: 'export'` are set, and a custom `not-found` page is defined, Next.js generates `404/index.html` instead of `404.html`. Static hosts (and some CDN configurations) look for `404.html` at the root of the output directory. The custom 404 page is never served; users see a raw host-level 404 instead.
-
-**Why it happens:** `trailingSlash: true` makes Next.js output every page as `[page]/index.html`, and it applies this logic to the 404 page as well, producing the wrong artifact.
-
-**Consequences:** Custom 404 page never appears. Broken user experience on any dead link.
-
-**Prevention:** If using `output: 'export'`, do not set `trailingSlash: true` unless also adding a post-build script that copies `out/404/index.html` to `out/404.html`. For a Vercel-hosted project without `output: 'export'`, this issue does not arise — Vercel handles routing natively. Since this project is recommended to use Vercel's native Next.js hosting, skip `output: 'export'` and skip `trailingSlash`, and let Vercel route 404s automatically.
-
-**Detection:** Navigating to a nonexistent URL returns a generic host error page rather than the app's custom 404 design.
-
----
-
-## Minor Pitfalls
-
----
-
-### Pitfall 10: `next/font` Not Working After Vercel Deploy (Works Locally)
-
-**What goes wrong:** `next/font` (Google Fonts integration) sometimes fails silently in Vercel deployments if the font is defined outside of a Server Component, or if the variable is not passed into the `<html>` element's `className`. The result is the fallback system font rendering in production while the custom font works in local dev.
-
-**Why it happens:** `next/font` is designed to only work in Server Components at the layout level. Using it inside a Client Component or calling it conditionally breaks the static font injection.
-
-**Prevention:** Define fonts once in `app/layout.tsx` (a Server Component) and apply via `className` on `<html>`. Never call `next/font` functions inside Client Components or dynamically. For a dark minimal site with a single monospace or sans-serif font, this is straightforward.
-
-```tsx
-import { Inter } from 'next/font/google'
-const inter = Inter({ subsets: ['latin'] })
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en" className={inter.className}>
-      {children}
-    </html>
-  )
+### Pitfall 1: Drawing a Sprite Before Its Image Has Loaded
+
+**What goes wrong:**
+`drawImage()` is called on the first rAF frame before the browser has finished decoding the `Image` object. The call silently no-ops — no error, no visible crash, no console warning. Samus is invisible. The loop continues running at 60fps doing nothing useful. Developers waste time suspecting DPR bugs or coordinate math.
+
+**Why it happens:**
+The existing rAF loop starts immediately when the `playing` screen mounts (Effect B in `SamusRunGame.tsx`). There is currently no image asset in that loop — everything is drawn programmatically. Adding a `new Image()` call and assuming it is ready by the first frame is the natural but wrong approach.
+
+**How to avoid:**
+Create `Image` objects outside the loop. Use `img.decode()` (returns a Promise) or an `onload` handler and only start or ungate the draw calls once loading completes. A clean pattern for this codebase:
+
+```ts
+// Preloader called before Effect B runs — result stored in useRef
+export async function loadSprites(): Promise<{ samus: HTMLImageElement; bg: HTMLImageElement }> {
+  const load = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  const [samus, bg] = await Promise.all([
+    load("/sprites/samus.png"),
+    load("/sprites/bg.png"),
+  ]);
+  return { samus, bg };
 }
 ```
 
-**Detection:** Vercel deploy renders in system font. Locally the custom font appears. Check browser DevTools network tab — if the font file request is missing, the variable was not applied.
+Store resolved images in a `useRef`. Gate the rAF loop start on a `spritesLoaded` boolean ref — not React state (which would cause a re-render and race).
+
+**Warning signs:**
+- Samus is invisible on the first few frames or intermittently on cold loads
+- Canvas renders the environment but shows nothing where Samus should be
+- No error in console — this is the tell; a real bug would throw
+
+**Phase to address:**
+Phase 8 (sprite animation system) — the very first step, before any animation logic is written.
 
 ---
 
-### Pitfall 11: Standalone HTML File in `/public` Does Not Inherit Site Styles
+### Pitfall 2: `setupCanvas` Called Every rAF Frame Breaks Pixel Alignment When `drawImage` Is Added
 
-**What goes wrong:** A standalone HTML game placed in `/public/games/flashcards/index.html` is completely isolated from the Next.js app. It has no access to Tailwind classes, global CSS, or any React context. If the developer tries to make it look like the rest of the site by referencing `/globals.css` or Tailwind CDN inline, it becomes fragile.
+**What goes wrong:**
+`setupCanvas` in this codebase calls `canvas.width = ...` and `canvas.height = ...` every frame. Setting `canvas.width` resets the entire context: transforms, `imageSmoothingEnabled`, and the DPR scale. The existing code re-applies `ctx.scale(dpr, dpr)` and `ctx.imageSmoothingEnabled = false` each time, so it currently works for vector drawing.
 
-**Why it happens:** Files in `/public` are served as raw static assets. They are not processed by Next.js at all.
+When `drawImage` is added, fractional sub-pixel coordinates become a problem. Frame index arithmetic frequently produces floats (e.g., `frameCol * 16.666...`). If the DPR scale is re-applied every frame and any `drawImage` argument is a float, sprites render on half-pixels and appear blurry or shimmer at 120fps on ProMotion displays, even with `imageSmoothingEnabled = false`.
 
-**Consequences:** The embedded game looks visually inconsistent with the rest of the site unless explicitly styled. This is expected behavior, not a bug — but developers sometimes expect shared styles to "just work."
+**Why it happens:**
+`setupCanvas` was designed for resize events (correct) but was also placed inside the rAF loop as a convenience. This was safe when everything was drawn with `fillRect` (which tolerates sub-pixel rounding). `drawImage` with sprite sheet slicing maps a source rect in a bitmap image to a destination rect on canvas — any fractional value in either rect causes bilinear blending in some browser/OS combinations regardless of the smoothing flag.
 
-**Prevention:** Accept isolation as the feature. Style the standalone HTML file independently using an inline `<style>` block or a separate CSS file in the same directory. Match colors using raw hex values (matching the site's dark palette) rather than shared Tailwind variables. The iframe embed approach on the parent page provides a clean frame — no style leakage in either direction.
+**How to avoid:**
+Two changes, in order:
+1. Move `setupCanvas` out of the per-frame loop. Call it only from the ResizeObserver (Effect A already does this correctly). Cache the `ctx` in a `useRef` and reuse it across frames.
+2. Floor all sprite coordinates: `Math.floor(frameCol * frameW)`, `Math.floor(destX)`, etc. Never pass floats to any argument of `drawImage`.
 
-**Detection:** Game renders with default browser styles (white background, serif font) when embedded.
+**Warning signs:**
+- Sprite appears slightly blurry or fuzzy compared to the source PNG
+- Blurriness gets worse when the window is resized (exposing DPR recalculation)
+- Artifact disappears when you force DPR=1 in DevTools
+
+**Phase to address:**
+Phase 8 (sprite animation system) — refactor `setupCanvas` call site before adding `drawImage`.
 
 ---
 
-### Pitfall 12: Vercel Hobby Plan Concurrent Build Lock
+### Pitfall 3: Sprite Frame Advancement Coupled to rAF Cadence, Not Elapsed Time
 
-**What goes wrong:** The Vercel Hobby (free) plan allows only one concurrent build. If a deploy is in progress when another push is made, the second deploy queues and the first may be cancelled or delayed.
+**What goes wrong:**
+The frame index is incremented on every `requestAnimationFrame` callback: `frameIndex = (frameIndex + 1) % totalFrames`. On a 60Hz display Samus cycles through frames at 60fps — far too fast (the Super Metroid breathing cycle is ~6fps). On a 120Hz ProMotion display it runs at 120fps, making the animation twice as fast. The animation is both wrong and device-dependent.
 
-**Why it happens:** Free tier resource constraint.
+**Why it happens:**
+The existing game loop already uses `dt` correctly for physics (velocity, obstacle scrolling). Developers assume they can reuse "increment per frame" for animation frames because it's simpler than a time accumulator.
 
-**Consequences:** For a solo developer with a single repo, this is almost never a problem in practice. It only matters if rapid successive pushes trigger multiple deploys simultaneously.
+**How to avoid:**
+Use a time accumulator for sprite frames, separate from physics `dt`:
 
-**Prevention:** No action needed for a personal site. Awareness is sufficient. If builds are cancelled unexpectedly, check the Vercel dashboard for queued deploys.
+```ts
+const FRAME_DURATION = 1 / 6; // 6fps for idle breathing
+let frameAccumulator = 0;
+
+function loop(ts: number) {
+  const dt = Math.min((ts - lastTs) / 1000, PHYSICS.dtCap);
+  frameAccumulator += dt;
+  if (frameAccumulator >= FRAME_DURATION) {
+    frameAccumulator -= FRAME_DURATION; // subtract, not reset — preserves sub-frame time
+    frameIndex = (frameIndex + 1) % totalFrames;
+  }
+  // ... rest of loop
+}
+```
+
+Different animations (idle/jump/screw attack) can have different `FRAME_DURATION` values without affecting physics speed.
+
+**Warning signs:**
+- Samus breathing animation looks like a strobe light on 60Hz
+- Animation is noticeably faster when you connect an external 120Hz monitor
+- Throttling DevTools to 30fps also slows down the animation (it should not)
+
+**Phase to address:**
+Phase 8 (sprite animation system) — frame advancement logic must use the accumulator from day one.
 
 ---
 
-## Phase-Specific Warnings
+### Pitfall 4: Background Scroll Speed Coupled to `speedMultiplier`
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|----------------|------------|
-| Initial Next.js setup | Tailwind v4 vs v3 config mismatch if using older tutorial | Verify Tailwind version, use correct config format for that version |
-| First Vercel deploy | Missing `output: 'export'` vs letting Vercel handle natively — pick one approach and commit | Use Vercel native (no `output: 'export'`) unless targeting non-Vercel hosts |
-| Adding next/image | Build failure: default loader incompatible with static export | Add `images: { unoptimized: true }` or use plain `<img>` |
-| Custom domain wiring | Apex vs subdomain DNS record type confusion | A record for apex, CNAME for www, do not include domain in Name field |
-| Math flash card game integration | Public folder naming collision, style isolation surprise | Use `/public/games/` subdirectory, style the game independently |
-| Dark theme implementation | Hydration flash if theme is dynamic | Hard-code `className="dark"` on `<html>` since theme never changes |
-| Font selection | Font not applying in production | Define font in Server Component layout only |
+**What goes wrong:**
+The background tile offset is incremented by `speed * dt` where `speed = baseScrollSpeed * state.speedMultiplier`. As the player clears obstacles, `speedMultiplier` climbs to 2.5x. The background also scrolls 2.5x faster. At high speed the environment becomes a blur and loses its identity as a Super Metroid level. Parallax layers that should move slower than the foreground instead move identically to obstacle columns.
+
+**Why it happens:**
+The existing obstacle scroll is `obs.x -= speed * dt`. Adding a background offset that reuses `speed` is the path of least resistance. The coupling is invisible at game start and only breaks at high multipliers after extended play.
+
+**How to avoid:**
+Give each background layer its own fixed speed constant, independent of `speedMultiplier`:
+
+```ts
+// constants.ts
+export const BACKGROUND = {
+  farLayerSpeed: 30,   // CSS px/s — always fixed
+  midLayerSpeed: 80,   // CSS px/s — always fixed
+} as const;
+```
+
+Pass a separate `bgOffset` value to `drawEnvironment` computed from wallclock time elapsed, not game speed. The background communicates "you are in Norfair" — it must remain visually coherent even when obstacles are flying.
+
+**Warning signs:**
+- Background looks fine at game start, becomes a smear after 20+ obstacles cleared
+- Midground cave layer moves at the same speed as obstacle columns (they should be slower)
+- Temporarily zeroing `speedMultiplier` in the draw call makes it look correct instantly
+
+**Phase to address:**
+Phase 9 (level background) — background draw function must accept its own offset state on day one.
+
+---
+
+### Pitfall 5: CORS-Tainted Canvas From External Sprite URLs
+
+**What goes wrong:**
+Sprite sheets loaded from any non-Vercel origin without `crossOrigin="anonymous"` taint the canvas. The game renders visually fine, but the canvas becomes read-protected. Any future call to `canvas.toDataURL()` or `ctx.getImageData()` throws a `SecurityError` with no symptom during normal play. Additionally, if the external CDN does not send `Access-Control-Allow-Origin`, the request can fail entirely — but only on Chromium, not older Safari — making it appear to be a browser bug.
+
+**Why it happens:**
+Developers set `img.src = "https://cdn.spriterips.com/..."` without setting `img.crossOrigin = "anonymous"` because the game renders correctly at first. The taint only surfaces if pixel data is ever read back.
+
+**How to avoid:**
+For this project: serve all sprite sheets as static assets under `/public/sprites/` on Vercel. Same-origin assets have no CORS concern, no taint risk, and no CDN dependency. If an external URL must be used during prototyping:
+
+```ts
+img.crossOrigin = "anonymous"; // MUST be set before .src
+img.src = "https://external-host.com/samus.png";
+```
+
+**Warning signs:**
+- Console: `SecurityError: The canvas has been tainted by cross-origin data`
+- Sprite renders fine in Chrome, fails silently in Safari (or vice versa)
+- Loads on localhost (same-origin dev server), fails in Vercel preview (different origin if CDN is external)
+
+**Phase to address:**
+Phase 8 (sprite animation system) — sprite sourcing strategy (local vs. external URL) must be decided before any `Image` loading code is written.
+
+---
+
+### Pitfall 6: Hitbox Dimensions No Longer Match After Switching from Programmatic Shapes to Sprite Images
+
+**What goes wrong:**
+The existing hitbox in `constants.ts` is `{ samusWidth: 28, samusHeight: 36 }` — tuned to match the programmatic `drawSamusIdle` geometry. The real Super Metroid sprite PNG will have different pixel dimensions and, critically, transparent padding around the visible character. The collision system measures from `samusX - samusWidth/2` to `samusX + samusWidth/2`. If `samusWidth` is now wrong (still reads 28 but the visible sprite is narrower), Samus collides with gaps she visually clears, or clips through obstacles she appears to miss.
+
+**Why it happens:**
+Hitbox dimensions are hardcoded numbers describing programmatic shapes. Sprite sheets have their own coordinate system. The AABB is not automatically derived from the image — the developer must manually reconcile both.
+
+**How to avoid:**
+When the real sprite is locked in:
+1. Measure the actual visible pixel bounds of the sprite frame (excluding transparent padding) in an image editor
+2. Compute the CSS-pixel dimensions at the intended render scale
+3. Update `COLLISION.samusWidth` and `COLLISION.samusHeight` to match the visible body, not the full image rect
+4. The existing `hitboxScale: 0.65` factor is retained for the forgiving hitbox feel
+
+Temporarily draw the hitbox rect in red during development to verify alignment visually before removing the debug overlay.
+
+**Warning signs:**
+- Players collide with obstacles without visually touching them
+- Players pass through obstacles that visually clip the sprite
+- Debug hitbox rect does not align with the visible sprite body
+
+**Phase to address:**
+Phase 8 (sprite animation system) — hitbox audit is a required step after the first sprite is drawn, not deferred to later.
+
+---
+
+### Pitfall 7: Canvas State Pollution Between Draw Calls When Mixing Sprite and Vector Drawing
+
+**What goes wrong:**
+The existing `drawSamusJump` in `drawSamus.ts` uses `ctx.save()` / `ctx.translate()` / `ctx.rotate()` / `ctx.restore()`. If any new sprite draw function uses `ctx.scale(-1, 1)` for horizontal flipping (a common sprite technique) and omits `ctx.restore()`, the transform accumulates. The next call to `drawRockWall` draws the obstacle mirrored and offset. This is currently low risk with pure vector drawing. Adding `drawImage` transforms multiplies the risk.
+
+**Why it happens:**
+Canvas context state is global and shared by every draw function via the same `ctx`. A missing `restore()` silently carries forward into every subsequent draw call in the same frame. No warning is thrown.
+
+**How to avoid:**
+Every draw function that mutates context state (transforms, `globalAlpha`, `fillStyle`) must wrap its body in `ctx.save()` / `ctx.restore()`. This discipline already exists in `drawSamusJump` — enforce it in every new sprite draw function. Never rely on the calling function to clean up state after a draw call. Code review should check for every `ctx.translate/rotate/scale` that it is enclosed in a matching save/restore pair.
+
+**Warning signs:**
+- Rock walls appear rotated or offset after Samus reaches certain animation states
+- Environment gradually drifts across frames
+- Bug disappears when the sprite draw call is removed from the frame
+
+**Phase to address:**
+Phase 8 (sprite animation system) — enforce save/restore on every new draw function before merging.
+
+---
+
+### Pitfall 8: iOS Safari Canvas Memory Budget Exceeded — Canvas Goes Black Silently
+
+**What goes wrong:**
+iOS Safari (all versions as of 2026) enforces two hard limits:
+1. **Per-canvas area limit:** `width * height > 16,777,216` physical pixels causes context allocation failure
+2. **Total canvas memory budget:** ~224–384MB across all live canvas elements; exceeding it causes the canvas to go entirely black with no JavaScript exception thrown
+
+At DPR=3 (iPhone 15 Pro), a viewport-filling canvas at 390×844 CSS pixels becomes 1,170×2,532 physical pixels = ~2.96M physical pixels — well within the per-canvas limit. The budget risk comes from creating off-screen canvases for sprite caching: a 512×512 source sprite sheet pre-rendered to an `OffscreenCanvas` at DPR=3 consumes 512×512×3×3×4 bytes (~9MB per sheet). Multiple sheets plus the main canvas can exhaust the budget on older iPhones.
+
+**Why it happens:**
+The common optimization for sprite-heavy games is to pre-render each frame to an off-screen canvas once, then `drawImage(offscreenCanvas, ...)` per frame to avoid repeated sprite-sheet slicing math. This optimization is valid on desktop but dangerous on iOS due to the memory budget.
+
+**How to avoid:**
+- Do not use off-screen canvas for sprite caching in this project. The sprite count is small (idle: ~4 frames, jump: ~3 frames, screw: ~8 frames). Direct sprite-sheet slicing with `drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)` is fast enough.
+- The main canvas is not destroyed and recreated on restart (existing code is correct — the canvas element persists across game states).
+- If off-screen canvases are ever added, dispose explicitly: set `offscreen.width = 0; offscreen.height = 0` before releasing the reference.
+
+**Warning signs:**
+- Canvas goes completely black with no error in JavaScript console
+- iOS Safari console shows: `Total canvas memory use exceeds the maximum limit`
+- Works on desktop and Android, fails only on iPhone/iPad
+- Failure happens after multiple game restarts or after loading multiple sprite sheets, not on first page load
+
+**Phase to address:**
+Phase 8 (sprite animation system) — sprite preloading strategy must avoid off-screen canvas inflation. Phase 9 (background) — background tile caching must not add canvas elements.
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Calling `setupCanvas` (which resets `canvas.width`) every rAF frame | Single source of DPR truth, simpler code | Sub-pixel rendering bugs with `drawImage`, unnecessary GPU uploads, full context reset every frame | Never — refactor before adding `drawImage` |
+| Frame counter `frameIndex++` instead of time accumulator | 5 fewer lines of code | Animation speed is device-dependent; wrong on 120Hz displays, wrong when frame rate drops | Never for any user-visible animation |
+| Loading sprites from external CDN URL | Avoids copying sprite files to repo | CORS taint risk, CDN availability dependency, no control over asset format or compression | Acceptable only during prototyping; must move to `/public/sprites/` before shipping |
+| Coupling background scroll to game `speedMultiplier` | Reuses existing speed math | Background becomes unreadable at high game speed; breaks environment identity | Never |
+| Skipping hitbox audit after sprite swap | Faster first pass | Players experience invisible collision walls; game feels broken | Never — hitbox audit is a required delivery condition |
+
+---
+
+## Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| `Image` loading in rAF loop | Calling `new Image()` inside `loop()` on every frame | Create once outside the loop; await `onload`/`img.decode()` before starting draw calls |
+| `drawImage` with DPR scaling | Passing float coordinates from frame index arithmetic | `Math.floor()` all eight `drawImage` arguments: `sx`, `sy`, `sw`, `sh`, `dx`, `dy`, `dw`, `dh` |
+| Sprite horizontal flip (facing left) | Flipping the `<img>` element with CSS — has no effect on canvas | `ctx.save(); ctx.scale(-1, 1); ctx.translate(-destX * 2 - destW, 0); drawImage(...); ctx.restore()` |
+| `imageSmoothingEnabled` after context reset | Setting `canvas.width` resets it; new sprite appears blurry | Already re-applied in `setupCanvas` — maintain this; if `setupCanvas` is refactored out of loop, re-apply `imageSmoothingEnabled = false` in the draw functions that call `drawImage` |
+| Background tile offset wrapping | Offset accumulates indefinitely, overflows float precision after hours | Wrap offset modulo tile width: `bgOffset = bgOffset % tileWidth` |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Calling `setupCanvas` (sets `canvas.width`) every rAF frame | Full context reset, blurry sprites, unnecessary GPU texture re-upload | Move to ResizeObserver only; cache `ctx` in `useRef` | Immediately visible with `drawImage`; invisible with pure `fillRect` |
+| Overdraw from multiple opaque background layers | GPU fill rate pressure on mid-range iPhones | Limit background layers to 2–3 max; avoid `globalAlpha` per-frame | 3+ full-screen layers at 60fps on iPhone 12 or older |
+| Off-screen canvas per sprite frame for pre-rendering optimization | Works on desktop; canvas goes black on iOS | Skip off-screen canvas; direct `drawImage` slice is fast enough for under 20 frames | iOS Safari memory budget, ~224MB total |
+| Large uncompressed PNG sprite sheet | Slow initial load; visible frame drop on first game start | Compress to indexed PNG or WebP; keep total sprite assets under 200KB | On 3G or slow WiFi; also on cold cache loads in Vercel preview |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Sprite loading:** Image appears in game on cache-hit — verify it also appears on first frame after a hard-refresh (cache cleared) on the first ever load
+- [ ] **Frame rate independence:** Animation plays correctly at 60fps — verify by throttling DevTools to 30fps and confirming animation speed is unchanged
+- [ ] **DPR correctness:** Sprites look sharp in DevTools — verify on an actual iPhone at DPR=3, not just DevTools device emulation (emulation often uses DPR=2)
+- [ ] **Hitbox alignment:** No phantom collisions — verify with a red debug rect overlay that hitbox tracks visible sprite body, not full image rect including transparent padding
+- [ ] **Background at speed:** Environment looks like Norfair after 30+ obstacles — verify background is still readable at `speedMultiplier` 2.0+
+- [ ] **CORS:** Sprite loads on localhost — verify also on Vercel preview deploy to catch same-origin vs. cross-origin differences
+- [ ] **iOS canvas:** Game renders on iPhone — verify on real Safari on iOS, not Chrome on iOS (Chrome on iOS uses WebKit, but Safari has stricter canvas memory enforcement)
+- [ ] **Canvas state:** Environment and obstacles render correctly after all animation states — verify rock walls are not rotated or offset after screw attack animation runs
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Sprite draw silently fails (image not loaded) | LOW | Add `onload`/`decode()` gate; no logic changes required |
+| Blurry sprites from float coordinates | LOW | Add `Math.floor()` to all `drawImage` args; ~10-minute fix, isolated to draw functions |
+| Wrong animation speed on 120Hz | LOW | Replace frame counter with time accumulator; change is isolated to animation frame advancement logic |
+| Background coupled to game speed | LOW | Extract background speed to constant; pass separate offset param to `drawEnvironment` |
+| CORS-tainted canvas | LOW if caught early | Move assets to `/public/sprites/`; update all `img.src` paths to relative URLs |
+| Hitbox mismatch after sprite swap | MEDIUM | Measure sprite visible bounds in image editor; update `COLLISION` constants; re-test all collision scenarios manually |
+| Canvas state pollution | MEDIUM | Audit every draw function for unmatched save/restore; add debug rect overlays to isolate which function leaks state |
+| iOS canvas memory budget exceeded | HIGH if off-screen canvases proliferate | Audit all `OffscreenCanvas`/`new HTMLCanvasElement` calls; replace with direct `drawImage` slicing; may require rearchitecting sprite caching |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Image not loaded before rAF draw | Phase 8 — sprite animation | First-frame render test with hard-refresh (cache cleared) |
+| `setupCanvas` every frame + float `drawImage` coords | Phase 8 — sprite animation | Visual sharpness on DPR=3 device; no per-frame context reset in profiler |
+| Frame rate coupled to rAF cadence | Phase 8 — sprite animation | Animation speed identical at 30fps, 60fps, 120fps in DevTools |
+| Background speed coupled to `speedMultiplier` | Phase 9 — level background | Background legible and correct speed after 30+ obstacles cleared |
+| CORS-tainted canvas | Phase 8 — sprite animation (asset sourcing) | Sprites load correctly on Vercel preview deploy, not just localhost |
+| Hitbox mismatch after sprite swap | Phase 8 — sprite animation (post-first-sprite audit) | Red debug rect aligns with visible sprite body; no phantom collisions |
+| Canvas state pollution from transforms | Phase 8 — sprite animation | Rock walls and environment undistorted during all animation states |
+| iOS canvas memory budget | Phase 8 — sprite animation (preload strategy) | Game renders correctly on iPhone after 5+ game restarts; no canvas blackout |
 
 ---
 
 ## Sources
 
-- [Next.js Static Exports — Official Docs](https://nextjs.org/docs/app/guides/static-exports)
-- [Next.js Export with Image Optimization API error](https://nextjs.org/docs/messages/export-image-api)
-- [Next.js Conflicting Public File and Page File error](https://nextjs.org/docs/messages/conflicting-public-file-page)
-- [Tailwind CSS v4.0 Release](https://tailwindcss.com/blog/tailwindcss-v4)
-- [Tailwind CSS Upgrade Guide](https://tailwindcss.com/docs/upgrade-guide)
-- [Install Tailwind CSS with Next.js — Official Guide](https://tailwindcss.com/docs/guides/nextjs)
-- [Vercel Domains — Troubleshooting](https://vercel.com/docs/domains/troubleshooting)
-- [Vercel Hobby Plan Limits](https://vercel.com/docs/plans/hobby)
-- [next-themes: Next.js dark mode hydration](https://github.com/pacocoursey/next-themes)
-- [GitHub Discussion: output export + useParams not supported](https://github.com/vercel/next.js/discussions/64660)
-- [GitHub Issue: trailingSlash + custom 404 + next export](https://github.com/vercel/next.js/issues/16528)
-- [Debugging Tailwind CSS and Next.js — LogRocket](https://blog.logrocket.com/debugging-tailwind-css-next-js/)
+- [MDN: Optimizing canvas](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas) — HIGH confidence (official)
+- [web.dev: High DPI Canvas](https://web.dev/articles/canvas-hidipi) — HIGH confidence (official Google)
+- [MDN: CORS enabled images in canvas](https://developer.mozilla.org/en-US/docs/Web/HTML/How_to/CORS_enabled_image) — HIGH confidence (official)
+- [MDN: imageSmoothingEnabled](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled) — HIGH confidence (official)
+- [MDN: Crisp pixel art look with image-rendering](https://developer.mozilla.org/en-US/docs/Games/Techniques/Crisp_pixel_art_look) — HIGH confidence (official)
+- [WebKit bug 195325: Total canvas memory use exceeds the maximum limit](https://bugs.webkit.org/show_bug.cgi?id=195325) — HIGH confidence (official WebKit tracker)
+- [PQINA: Canvas Area Exceeds The Maximum Limit](https://pqina.nl/blog/canvas-area-exceeds-the-maximum-limit/) — MEDIUM confidence (well-documented community post with WebKit bug references)
+- [PQINA: Total Canvas Memory Use Exceeds The Maximum Limit](https://pqina.nl/blog/total-canvas-memory-use-exceeds-the-maximum-limit/) — MEDIUM confidence
+- [Spicy Yoghurt: Images and Sprite Animations](https://spicyyoghurt.com/tutorials/html5-javascript-game-development/images-and-sprite-animations) — MEDIUM confidence (tutorial, corroborated by MDN)
+- [Kirupa: Canvas High DPI / Retina](https://www.kirupa.com/canvas/canvas_high_dpi_retina.htm) — MEDIUM confidence (tutorial)
+- [Corsfix: Tainted Canvas explained](https://corsfix.com/blog/tainted-canvas) — MEDIUM confidence (focused technical article)
+- Existing codebase: `SamusRunGame.tsx`, `setupCanvas.ts`, `gameLoop.ts`, `constants.ts` — HIGH confidence (direct analysis of the system being modified)
+
+---
+*Pitfalls research for: sprite sheet animation and level backgrounds added to existing rAF canvas game*
+*Researched: 2026-04-24*
