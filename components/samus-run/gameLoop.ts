@@ -1,4 +1,4 @@
-import { PHYSICS, GAME, OBSTACLE_SPACING_RATIO, COLLISION } from "./constants";
+import { PHYSICS, GAME, OBSTACLE_SPACING_PX, COLLISION } from "./constants";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ export function createInitialGameState(
         scored: false,
       },
       {
-        x: canvasWidth + 100 + canvasWidth * OBSTACLE_SPACING_RATIO,
+        x: canvasWidth + 100 + OBSTACLE_SPACING_PX,
         ...randomGap(canvasHeight),
         scored: false,
       },

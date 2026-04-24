@@ -39,8 +39,9 @@ export const PHYSICS = {
   dtCap: 0.05,              // max delta-time in seconds (prevents teleport on tab-switch)
 } as const;
 
-// Horizontal spacing between obstacles in the pool (CSS px multiplier of canvasWidth)
-export const OBSTACLE_SPACING_RATIO = 0.6;
+// Horizontal spacing between obstacles — fixed px so gap stays consistent across screen widths.
+// Wide screens see more of the level ahead rather than larger gaps.
+export const OBSTACLE_SPACING_PX = 480;
 
 // Collision hitbox — reduced to ~65% of sprite size per D-04 (60-70% range)
 export const COLLISION = {
