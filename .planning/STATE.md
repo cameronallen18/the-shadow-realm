@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Pixel Perfect
 status: planning
-stopped_at: Milestone v1.2 started — defining requirements
+stopped_at: Roadmap created — Phase 8 ready to plan
 last_updated: "2026-04-24T00:00:00.000Z"
 last_activity: 2026-04-24
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,16 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-24)
 
 **Core value:** A live, publicly accessible home base that deploys cleanly from GitHub and can absorb new projects without turning into a mess.
-**Current focus:** v1.2 Pixel Perfect — defining requirements
+**Current focus:** v1.2 Pixel Perfect — roadmap created, Phase 8 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 8 (Asset Pipeline) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-24 — Milestone v1.2 started
+Status: Roadmap created, awaiting plan
+Last activity: 2026-04-24 — v1.2 roadmap written
 
 Progress (v1.2): [░░░░░░░░░░] 0%
+
+```
+Phase 8: Asset Pipeline      [ ] Not started
+Phase 9: Sprite Animation    [ ] Not started
+Phase 10: Background Scroll  [ ] Not started
+```
 
 ## Performance Metrics
 
@@ -52,22 +58,20 @@ Progress (v1.2): [░░░░░░░░░░] 0%
 | 06 | 2 | - | - |
 | 07 | 2 | - | - |
 
-**By Phase (v1.1 in progress):**
+**By Phase (v1.2 in progress):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 4. Game Shell | TBD | - | - |
-| 5. Canvas and Environment | TBD | - | - |
-| 6. Physics and Input | TBD | - | - |
-| 7. Collision, Scoring, and Audio | TBD | - | - |
+| 8. Asset Pipeline | TBD | - | - |
+| 9. Sprite Animation | TBD | - | - |
+| 10. Background Scroll | TBD | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01, 02-01, 02-02, 03-01, 03-02
+- Last 5 plans: 06-01, 06-02, 07-01, 07-02, (next: 08-01)
 - Trend: -
 
 *Updated after each plan completion*
-| Phase 06-physics-and-input P02 | 10 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -92,10 +96,19 @@ Progress (v1.2): [░░░░░░░░░░] 0%
 - [Phase 06-02]: pendingJump=true set at rAF init so the START-triggering input causes immediate jump without second keypress
 - [Phase 07]: audioManager.ts standalone module with lazy AudioContext init in handleInput for iOS Safari unlock (D-03)
 - [Phase 07]: Web Audio oscillators chosen over audio files — zero assets, zero npm packages; wave types (square/sine/sawtooth) chosen for semantic distinctness
+- v1.2 Roadmap: Zero new npm packages — all sprite/animation/background work uses native Canvas 2D APIs (drawImage 9-arg, imageSmoothingEnabled, Promise.all)
+- v1.2 Roadmap: Sprites downloaded manually by user from spriters-resource.com and committed to public/sprites/ — Phase 8 has a human checkpoint before plan completes
+- v1.2 Roadmap: AnimState lives in rAF closure (not useRef) so it auto-resets on game restart without explicit reset logic
+- v1.2 Roadmap: Background scroll speed encoded as BG_SCROLL_SPEED constant independent of speedMultiplier — decoupled from day one to prevent unreadable blur at high game speed
+- v1.2 Roadmap: Norfair is the only viable environment for v1.2 — existing NORFAIR color constants already match; Brinstar/Maridia require full palette redesign and are out of scope
+- v1.2 Roadmap: QUAL-01 (pixel-perfect scaling) and QUAL-02 (hitbox audit) assigned to Phase 9 — blocking prerequisites for shipping sprite draw, not a separate cleanup phase
+- v1.2 Roadmap: drawImage coords must use Math.floor() on all 8 arguments — fractional pixel coords silently blur pixel art
 
 ### Pending Todos
 
 - Fix app/icon.svg to use outlined path instead of font-family="Georgia" (WR-01 from Phase 2 review)
+- Phase 9 start: measure downloaded sprite sheet in image editor to fill SPRITE_LAYOUT constants (frameW, frameH, row indices) — budget 30 min before writing draw code
+- Phase 9 start: verify downloaded PNG uses alpha transparency (not magenta key color) before writing draw code
 
 ### Blockers/Concerns
 
@@ -103,6 +116,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-04-24T00:30:48.867Z
-Stopped at: Completed 07-02-PLAN.md — audio system complete, Phase 7 done
+Last session: 2026-04-24 — v1.2 roadmap created
+Stopped at: Roadmap written — ROADMAP.md, STATE.md, REQUIREMENTS.md updated
 Resume file: None

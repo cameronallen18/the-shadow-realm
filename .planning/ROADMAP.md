@@ -6,6 +6,8 @@ Three phases deliver a live, minimal dark personal site with a working project c
 
 Four additional phases (4-7) deliver the v1.1 Samus Run milestone: a fully playable side-scrolling browser game integrated as a new catalog entry.
 
+Three additional phases (8-10) deliver the v1.2 Pixel Perfect milestone: authentic Super Metroid sprites, canvas-based animation, and a scrolling Norfair background.
+
 ## Phases
 
 **Phase Numbering:**
@@ -21,6 +23,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Canvas and Environment** - Viewport-filling canvas, retina scaling, Norfair visuals, and Samus sprites
 - [x] **Phase 6: Physics and Input** - Game loop, gravity/jump mechanics, obstacle scrolling, speed progression, and unified input (completed 2026-04-23)
 - [x] **Phase 7: Collision, Scoring, and Audio** - Hit detection, score counter, localStorage high score, and all sound effects (completed 2026-04-24)
+- [ ] **Phase 8: Asset Pipeline** - Sprite PNGs committed to public/sprites/ and confirmed loadable at production URL
+- [ ] **Phase 9: Sprite Animation** - Samus renders from real sprite sheet with idle frame, looping spin jump, screw attack distinction, and correct hitbox
+- [ ] **Phase 10: Background Scroll** - Norfair background tiles scroll at fixed independent speed with seamless wrap
 
 ## Phase Details
 
@@ -129,10 +134,52 @@ Plans:
 
 ---
 
+## v1.2 Pixel Perfect
+
+### Phase 8: Asset Pipeline
+**Goal**: Both Super Metroid sprite PNGs are committed to the repo and confirmed loadable from same origin, and the image preloader infrastructure is in place before any draw code is written
+**Depends on**: Phase 7
+**Requirements**: ASSET-01, ASSET-02
+**Success Criteria** (what must be TRUE):
+  1. `public/sprites/samus.png` and `public/sprites/norfair-bg.png` return HTTP 200 in the browser network tab on the Vercel production URL
+  2. A `loadSprites()` function (or equivalent) loads both images via `Promise.all` and stores them in a `useRef` — no new npm packages introduced
+  3. The game renders identically to before this phase (no visual change); the fallback shape Samus is still displayed
+  4. Human checkpoint confirmed: user has downloaded PNGs from Spriters Resource and committed them to `public/sprites/`
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 9: Sprite Animation
+**Goal**: Samus renders from the real sprite sheet with correct animation for every game state, hitbox constants match the real sprite body, and pixel-perfect scaling is enforced
+**Depends on**: Phase 8
+**Requirements**: ANIM-01, ANIM-02, ANIM-03, ANIM-04, QUAL-01, QUAL-02
+**Success Criteria** (what must be TRUE):
+  1. Samus displays the correct idle (standing) frame from the sprite sheet when on the floor — no shape fallback visible when sprites are loaded
+  2. A looping spin jump animation plays while Samus is airborne, advancing frames via a dt accumulator (visually consistent at both 60Hz and 120Hz)
+  3. The screw attack state is visually distinct from a normal jump — spin frames plus a visible overlay differentiate the two states
+  4. When the sprite PNG is not yet loaded (`spritesRef.current.samus === null`), the procedural shape Samus renders as a fallback with no error thrown
+  5. Sprites render with nearest-neighbor scaling (`imageSmoothingEnabled = false`) — no bilinear blur visible on pixel art edges
+  6. Collision hitbox constants (`COLLISION.samusWidth`, `COLLISION.samusHeight`) are updated to match the visible body of the real sprite (excluding transparent padding), verified by overlaying a debug rect
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 10: Background Scroll
+**Goal**: The Norfair background tiles scroll seamlessly in a loop at a fixed speed that is fully independent of game speed, and the solid-fill fallback is preserved
+**Depends on**: Phase 9
+**Requirements**: ENV-01, ENV-02
+**Success Criteria** (what must be TRUE):
+  1. The Norfair background image tiles horizontally and scrolls continuously — no blank gap or visible seam at the wrap boundary
+  2. Background scroll speed does not change when the game speed multiplier increases (encoded as a separate `BG_SCROLL_SPEED` constant, not derived from `speedMultiplier`)
+  3. Background scroll offset resets to 0 on game restart without a page reload
+  4. When the background PNG is not loaded, the existing solid-fill environment renders as before (no regression)
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -141,5 +188,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Project Catalog | 2/2 | Complete | 2026-04-15 |
 | 4. Game Shell | 1/1 | Complete | 2026-04-17 |
 | 5. Canvas and Environment | 0/2 | Planning complete | - |
-| 6. Physics and Input | 2/2 | Complete   | 2026-04-23 |
-| 7. Collision, Scoring, and Audio | 2/2 | Complete   | 2026-04-24 |
+| 6. Physics and Input | 2/2 | Complete | 2026-04-23 |
+| 7. Collision, Scoring, and Audio | 2/2 | Complete | 2026-04-24 |
+| 8. Asset Pipeline | 0/? | Not started | - |
+| 9. Sprite Animation | 0/? | Not started | - |
+| 10. Background Scroll | 0/? | Not started | - |
