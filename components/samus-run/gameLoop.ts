@@ -147,8 +147,11 @@ export function updateGame(
     obs.x -= speed * dt;
 
     if (obs.x + GAME.obstacleWidth < 0) {
-      // Recycle obstacle to the right
-      obs.x = canvasWidth + 50;
+      // Recycle obstacle to the right — place it OBSTACLE_SPACING_PX ahead of
+      // the furthest obstacle still on screen so spacing stays consistent.
+      const otherObs = state.obstacles.find((o) => o !== obs);
+      const leadX = otherObs ? otherObs.x : canvasWidth;
+      obs.x = leadX + OBSTACLE_SPACING_PX;
       const gap = randomGap(canvasHeight);
       obs.gapTop = gap.gapTop;
       obs.gapBottom = gap.gapBottom;
