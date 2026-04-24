@@ -105,6 +105,15 @@ export default function SamusRunGame() {
   const scoreDisplayRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<AudioManager | null>(null);
 
+  // spritesRef — loaded once on mount by Effect D.
+  // samus: offscreen HTMLCanvasElement with magenta converted to alpha.
+  // bg: HTMLImageElement for norfair_upper.png (already RGBA, no conversion needed).
+  // Both start null; Phase 9 draw calls must gate on samus !== null.
+  const spritesRef = useRef<{
+    samus: HTMLCanvasElement | null;
+    bg: HTMLImageElement | null;
+  }>({ samus: null, bg: null });
+
   // Screen-ref mirror — keeps screenRef in sync without stale closure issues
   useEffect(() => {
     screenRef.current = state.screen;
@@ -256,6 +265,72 @@ export default function SamusRunGame() {
       canvas.removeEventListener("touchstart", onTouchStart);
     };
   }, [handleInput]);
+
+  // Effect D: Load sprite PNGs once on mount.
+  // samus.png uses RGB mode with magenta (#FF00FF) as transparency key — must be
+  // converted to alpha via offscreen canvas. norfair_upper.png is already RGBA.
+  // Both are same-origin assets in public/sprites/ — no CORS issue.
+  useEffect(() => {
+    function loadImage(src: string): Promise<HTMLImageElement> {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load sprite: ${src}`));
+        img.src = src;
+      });
+    }
+
+    function convertMagentaToAlpha(img: HTMLImageElement): HTMLCanvasElement {
+      // Draw the source image onto an offscreen canvas, then walk every pixel.
+      // Any pixel where r=255, g=0, b=255 (magenta key) is zeroed out (full transparency).
+      // This runs once at load time — NOT inside the rAF loop.
+      // Do NOT use OffscreenCanvas — iOS Safari has a memory budget that silently
+      // blacks out canvases when too many OffscreenCanvas instances exist.
+      const offscreen = document.createElement("canvas");
+      offscreen.width = img.naturalWidth;
+      offscreen.height = img.naturalHeight;
+      const ctx = offscreen.getContext("2d");
+      if (!ctx) return offscreen;
+
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, offscreen.width, offscreen.height);
+      const data = imageData.data; // Uint8ClampedArray: [r, g, b, a, r, g, b, a, ...]
+
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 255) {
+          // Magenta pixel — zero all four channels
+          data[i] = 0;
+          data[i + 1] = 0;
+          data[i + 2] = 0;
+          data[i + 3] = 0;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      return offscreen;
+    }
+
+    let cancelled = false;
+
+    Promise.all([
+      loadImage("/sprites/samus.png"),
+      loadImage("/sprites/norfair_upper.png"),
+    ])
+      .then(([samusImg, bgImg]) => {
+        if (cancelled) return;
+        spritesRef.current.samus = convertMagentaToAlpha(samusImg);
+        spritesRef.current.bg = bgImg;
+      })
+      .catch((err) => {
+        // Non-fatal: shape fallback Samus continues to render.
+        // Logged to console for debugging; game runs normally.
+        console.warn("[Effect D] Sprite load failed:", err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []); // Empty deps = mount-only. Sprites are global assets, load once per session.
 
   return (
     <div className="relative w-full h-dvh bg-black overflow-hidden">
