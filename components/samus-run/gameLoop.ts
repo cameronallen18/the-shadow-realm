@@ -92,9 +92,10 @@ export function updateGame(
     state.samusVY = 0;
   }
 
-  // e. Ceiling clamp
-  if (state.samusY <= 0) {
-    state.samusY = 0;
+  // e. Ceiling clamp — keep top of sprite in frame (samusY is sprite center)
+  const spriteHalfH = COLLISION.samusHeight / 2;
+  if (state.samusY <= spriteHalfH) {
+    state.samusY = spriteHalfH;
     state.samusVY = 0;
   }
 
