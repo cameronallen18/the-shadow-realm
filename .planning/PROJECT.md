@@ -19,6 +19,7 @@ A live, publicly accessible home base that deploys cleanly from GitHub and can a
 - [x] Samus Run game shell entry in catalog, linking to /projects/samus-run — validated in Phase 4
 - [x] Samus Run canvas fills viewport on all devices, DPR-aware, Norfair environment drawn with both Samus sprite states — validated in Phase 5
 - [x] Samus moves under gravity, responds to keyboard/mouse/touch input, obstacles scroll with randomized gaps and speed progression — validated in Phase 6
+- [x] Samus Run game fully winnable/losable — AABB collision, per-gap scoring, live HUD, localStorage high score, Web Audio sounds — validated in Phase 7
 
 ### Active
 
