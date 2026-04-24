@@ -49,3 +49,20 @@ export const COLLISION = {
   samusWidth: 28,      // approximate sprite width in CSS pixels (from drawSamus dimensions)
   samusHeight: 36,     // approximate sprite height in CSS pixels (from drawSamus dimensions)
 } as const;
+
+// Sprite sheet layout — measured from samus.png (6496×4384px, 96×96 cell grid).
+// Each cell has a 1px black border; content occupies ~94×94 with the sprite
+// data starting at offset (17, 17) within the cell at 81×81 px.
+// Section IDs match the sheet's internal section numbering.
+export const SPRITE_LAYOUT = {
+  cellSize: 96,         // px — full cell including 1px border
+  contentSize: 81,      // px — visible sprite content within the cell
+  contentOffset: 17,    // px — x and y offset from cell origin to sprite content
+
+  // Section row Y-origins in the sprite sheet (absolute px from top of PNG)
+  idle:         { sy: 49,   frames: 1 },  // section 00 — standing idle (1 frame)
+  spinJumpR:    { sy: 3249, frames: 9 },  // section 19 — spin jump right (9 frames)
+  spinJumpL:    { sy: 3377, frames: 9 },  // section 1A — spin jump left  (9 frames)
+  screwAttackR: { sy: 3505, frames: 9 },  // section 1B — screw attack right (9 frames)
+  screwAttackL: { sy: 3633, frames: 9 },  // section 1C — screw attack left  (9 frames)
+} as const;
