@@ -9,7 +9,10 @@ export default function Home() {
           the shadow realm
         </h1>
         <p className="text-[#ededed]/60 text-sm tracking-wide">
-          my digital junk drawer.
+          my digital junk drawer
+        </p>
+        <p className="text-[#ededed]/30 text-xs tracking-wide">
+          v0.1.0
         </p>
       </div>
 
