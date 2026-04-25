@@ -46,8 +46,8 @@ export const OBSTACLE_SPACING_PX = 480;
 // Collision hitbox — reduced to ~65% of sprite size per D-04 (60-70% range)
 export const COLLISION = {
   hitboxScale: 0.65,   // 65% of sprite size per D-04 (~60-70% range)
-  samusWidth: 28,      // approximate sprite width in CSS pixels (from drawSamus dimensions)
-  samusHeight: 36,     // approximate sprite height in CSS pixels (from drawSamus dimensions)
+  samusWidth: 40,      // sprite body width — 81px content, body spans 55px, trimmed to 40 for fair hitbox
+  samusHeight: 60,     // sprite body height — 73px visible (head to floor), trimmed to 60 for fair hitbox
 } as const;
 
 // Sprite sheet layout — measured from samus.png (6496×4384px, 96×96 cell grid).
