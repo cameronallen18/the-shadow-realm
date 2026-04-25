@@ -17,6 +17,7 @@ export interface GamePhysicsState {
   speedMultiplier: number;
   gameOver: boolean;
   pendingJump: boolean;     // set true on first input; consumed by first loop frame
+  pendingScrewAttack: boolean; // set true when mid-air jump fires; consumed by Effect B loop
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ export function createInitialGameState(
     speedMultiplier: 1,
     gameOver: false,
     pendingJump: false,
+    pendingScrewAttack: false,
   };
 }
 
