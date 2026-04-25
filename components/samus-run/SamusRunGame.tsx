@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useReducer, useRef, useEffect, useCallback } from "react";
 import { setupCanvas } from "./canvas/setupCanvas";
 import { drawEnvironment } from "./canvas/drawEnvironment";
-import { drawSamusIdle, drawSamusJump } from "./canvas/drawSamus";
+import { drawSamusIdle, drawSamusJump, drawSamusSprite } from "./canvas/drawSamus";
 import { drawRockWall } from "./canvas/drawObstacleShape";
-import { PHYSICS, GAME } from "./constants";
+import { PHYSICS, GAME, SPRITE_LAYOUT } from "./constants";
 import { GamePhysicsState, createInitialGameState, updateGame, triggerJump } from "./gameLoop";
 import { AudioManager, createAudioManager } from "./audioManager";
 
@@ -56,7 +56,9 @@ function drawScene(
   screen: GameScreen,
   width: number,
   height: number,
-  physics?: GamePhysicsState
+  physics?: GamePhysicsState,
+  sprites?: { samus: HTMLCanvasElement | null; bg: HTMLImageElement | null },
+  animState?: { frame: number; accumulator: number; isScrewAttack: boolean }
 ): void {
   ctx.clearRect(0, 0, width, height);
   drawEnvironment(ctx, width, height);
@@ -68,19 +70,25 @@ function drawScene(
     }
     // Samus at physics-driven position
     const samusX = width * GAME.samusXRatio;
-    const useJump = physics.samusVY < 0; // moving upward = jump sprite
-    if (useJump) {
+    const isAirborne = physics.samusY < height * GAME.floorRatio - 1;
+    if (sprites?.samus) {
+      drawSamusSprite(ctx, sprites.samus, samusX, physics.samusY, GAME.samusScale, animState, isAirborne);
+    } else if (isAirborne) {
       drawSamusJump(ctx, samusX, physics.samusY, GAME.samusScale);
     } else {
       drawSamusIdle(ctx, samusX, physics.samusY, GAME.samusScale);
     }
   } else {
-    // Static idle/gameover scene (Phase 5 behavior preserved)
+    // Static idle/gameover scene (shape fallback preserved)
     const obstacleX = width * GAME.obstacleXRatio;
     drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
     const samusX = width * GAME.samusXRatio;
     const samusY = height * GAME.floorRatio;
-    drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
+    if (sprites?.samus) {
+      drawSamusSprite(ctx, sprites.samus, samusX, samusY, GAME.samusScale, undefined, false);
+    } else {
+      drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
+    }
   }
 }
 
@@ -134,7 +142,7 @@ export default function SamusRunGame() {
       const rect = cvs.getBoundingClientRect();
       canvasWidthRef.current = rect.width;
       canvasHeightRef.current = rect.height;
-      drawScene(ctx, state.screen, rect.width, rect.height);
+      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, undefined);
     }
 
     render();
@@ -168,6 +176,16 @@ export default function SamusRunGame() {
     let lastTs: number | null = null;
     let lastScore = 0;
 
+    // AnimState lives in Effect B closure per D-10 — auto-resets on game restart
+    let animState = {
+      frame: 0,
+      accumulator: 0,
+      isScrewAttack: false,
+    };
+
+    const SPIN_FPS = 10;
+    const FRAME_DURATION = 1 / SPIN_FPS; // 0.1s per frame
+
     function loop(ts: number) {
       const game = gameRef.current;
       if (!game) return;
@@ -189,6 +207,42 @@ export default function SamusRunGame() {
         audioRef.current?.playScore();
       }
 
+      // AnimState: airborne detection
+      const isAirborne = game.samusY < canvasHeightRef.current * GAME.floorRatio - 1;
+      const isOnFloor = !isAirborne;
+
+      // Consume pendingScrewAttack flag from physics state (set by handleInput when mid-air jump fires)
+      if (game.pendingScrewAttack) {
+        animState.isScrewAttack = true;
+        animState.frame = 0;
+        animState.accumulator = 0;
+        game.pendingScrewAttack = false;
+      }
+
+      // Reset animation on landing
+      if (isOnFloor) {
+        animState.isScrewAttack = false;
+        animState.frame = 0;
+        animState.accumulator = 0;
+      }
+
+      // Advance frames only while airborne
+      if (isAirborne) {
+        animState.accumulator += dt;
+        if (animState.accumulator >= FRAME_DURATION) {
+          animState.accumulator -= FRAME_DURATION; // subtract, not reset — preserves leftover for 120Hz accuracy
+          const section = animState.isScrewAttack ? SPRITE_LAYOUT.screwAttackR : SPRITE_LAYOUT.spinJumpR;
+          animState.frame = (animState.frame + 1) % section.frames;
+        }
+      }
+
+      // WR-03 fix: check game over BEFORE drawing the final frame
+      if (game.gameOver) {
+        audioRef.current?.playDeath();
+        dispatch({ type: "GAME_OVER", score: game.obstaclesCleared });
+        return; // stop loop
+      }
+
       const cvs = canvasRef.current;
       if (cvs) {
         const ctx = setupCanvas(cvs);
@@ -196,15 +250,8 @@ export default function SamusRunGame() {
           const r = cvs.getBoundingClientRect();
           canvasWidthRef.current = r.width;
           canvasHeightRef.current = r.height;
-          drawScene(ctx, "playing", r.width, r.height, game);
+          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState);
         }
-      }
-
-      // Check game over (floor fall-through or future collision)
-      if (game.gameOver) {
-        audioRef.current?.playDeath();
-        dispatch({ type: "GAME_OVER", score: game.obstaclesCleared });
-        return; // stop loop
       }
 
       rafId = requestAnimationFrame(loop);
@@ -227,8 +274,11 @@ export default function SamusRunGame() {
     } else if (screenRef.current === "playing") {
       const game = gameRef.current;
       if (game) {
+        if (game.samusVY !== 0) {
+          game.pendingScrewAttack = true; // mid-air jump — signal Effect B to enter screw attack mode
+        }
         triggerJump(game);
-        audioRef.current.playJump();
+        audioRef.current?.playJump(); // WR-02 fix: optional chaining null guard
       }
     }
     // gameover: do nothing — restart button handles it
@@ -354,7 +404,7 @@ export default function SamusRunGame() {
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10">
           <p className="text-[#ededed]/60 text-sm">samus run</p>
           <button
-            onClick={() => dispatch({ type: "START" })}
+            onClick={handleInput}
             className="text-[#ededed] text-xs uppercase tracking-widest py-3 px-4"
           >
             tap to start
