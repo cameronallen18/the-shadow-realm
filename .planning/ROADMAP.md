@@ -147,7 +147,7 @@ Plans:
   4. Human checkpoint confirmed: user has downloaded PNGs from Spriters Resource and committed them to `public/sprites/`
 **Plans:** 1 plan
 Plans:
-- [ ] 08-01-PLAN.md — Add SPRITE_LAYOUT constants and spritesRef + Effect D (image load + magenta-to-alpha conversion) to SamusRunGame.tsx
+- [x] 08-01-PLAN.md — Add SPRITE_LAYOUT constants and spritesRef + Effect D (image load + magenta-to-alpha conversion) to SamusRunGame.tsx
 
 ### Phase 9: Sprite Animation
 **Goal**: Samus renders from the real sprite sheet with correct animation for every game state, hitbox constants match the real sprite body, and pixel-perfect scaling is enforced

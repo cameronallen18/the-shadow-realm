@@ -42,3 +42,6 @@ next-env.d.ts
 
 # GSD agent worktrees (CI/CD infrastructure — not part of the project)
 .claude/worktrees/
+
+# Scratch files (local verification artifacts)
+.planning/phases/01-foundation/.live-url.txt
