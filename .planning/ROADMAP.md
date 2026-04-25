@@ -160,8 +160,10 @@ Plans:
   4. When the sprite PNG is not yet loaded (`spritesRef.current.samus === null`), the procedural shape Samus renders as a fallback with no error thrown
   5. Sprites render with nearest-neighbor scaling (`imageSmoothingEnabled = false`) — no bilinear blur visible on pixel art edges
   6. Collision hitbox constants (`COLLISION.samusWidth`, `COLLISION.samusHeight`) are updated to match the visible body of the real sprite (excluding transparent padding), verified by overlaying a debug rect
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 2 plans
+Plans:
+- [ ] 09-01-PLAN.md — Add drawSamusSprite, wire AnimState in Effect B, extend drawScene signature, fix WR-02/WR-03/IN-03
+- [ ] 09-02-PLAN.md — DEBUG_HITBOX visual tuning checkpoint, update COLLISION constants to match real sprite body
 
 ### Phase 10: Background Scroll
 **Goal**: The Norfair background tiles scroll seamlessly in a loop at a fixed speed that is fully independent of game speed, and the solid-fill fallback is preserved
@@ -192,5 +194,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Physics and Input | 2/2 | Complete | 2026-04-23 |
 | 7. Collision, Scoring, and Audio | 2/2 | Complete | 2026-04-24 |
 | 8. Asset Pipeline | 0/1 | Planning complete | - |
-| 9. Sprite Animation | 0/? | Not started | - |
+| 9. Sprite Animation | 0/2 | Planning complete | - |
 | 10. Background Scroll | 0/? | Not started | - |
