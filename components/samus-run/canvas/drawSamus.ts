@@ -127,8 +127,8 @@ export function drawSamusSprite(
   // Source rect in the sprite sheet
   const sx = Math.floor(frameIndex * cellSize + contentOffset);
   const sy = Math.floor(section.sy + contentOffset);
-  const sw = contentSize - 2; // 79 — stay within cell boundary (17+81=98 overruns 96px cell by 2px)
-  const sh = contentSize - 2; // 79
+  const sw = contentSize - 3; // 78 — row/col 95 of each 96px cell is a blue separator; sample only through row 94
+  const sh = contentSize - 3; // 78
 
   // Destination rect on canvas
   const dw = Math.floor(sw * scale);
