@@ -331,11 +331,10 @@ export default function SamusRunGame() {
     }
 
     function convertMagentaToAlpha(img: HTMLImageElement): HTMLCanvasElement {
-      // Draw the source image onto an offscreen canvas, then walk every pixel.
-      // Any pixel where r=255, g=0, b=255 (magenta key) is zeroed out (full transparency).
-      // This runs once at load time — NOT inside the rAF loop.
-      // Do NOT use OffscreenCanvas — iOS Safari has a memory budget that silently
-      // blacks out canvases when too many OffscreenCanvas instances exist.
+      // Draw source image onto an offscreen canvas, sample pixel (0,0) as the background
+      // key color, then zero out all pixels within tolerance of that color.
+      // Sampling the key rather than hardcoding handles any background color the sheet uses.
+      // Do NOT use OffscreenCanvas — iOS Safari silently blacks out excess instances.
       const offscreen = document.createElement("canvas");
       offscreen.width = img.naturalWidth;
       offscreen.height = img.naturalHeight;
@@ -346,9 +345,16 @@ export default function SamusRunGame() {
       const imageData = ctx.getImageData(0, 0, offscreen.width, offscreen.height);
       const data = imageData.data; // Uint8ClampedArray: [r, g, b, a, r, g, b, a, ...]
 
+      // Use top-left pixel as the background key color
+      const keyR = data[0], keyG = data[1], keyB = data[2];
+      const TOLERANCE = 30;
+
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i] === 255 && data[i + 1] === 0 && data[i + 2] === 255) {
-          // Magenta pixel — zero all four channels
+        if (
+          Math.abs(data[i] - keyR) <= TOLERANCE &&
+          Math.abs(data[i + 1] - keyG) <= TOLERANCE &&
+          Math.abs(data[i + 2] - keyB) <= TOLERANCE
+        ) {
           data[i] = 0;
           data[i + 1] = 0;
           data[i + 2] = 0;
