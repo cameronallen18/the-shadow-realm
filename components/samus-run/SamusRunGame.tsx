@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useReducer, useRef, useEffect, useCallback } from "react";
+import { useReducer, useRef, useEffect, useCallback, useState } from "react";
 import { setupCanvas } from "./canvas/setupCanvas";
 import { drawEnvironment } from "./canvas/drawEnvironment";
 import { drawSamusIdle, drawSamusJump, drawSamusSprite } from "./canvas/drawSamus";
@@ -121,6 +121,9 @@ export default function SamusRunGame() {
     bg: HTMLImageElement | null;
   }>({ samus: null, bg: null });
 
+  // Triggers Effect A re-render once sprites finish loading on the idle screen.
+  const [spritesLoaded, setSpritesLoaded] = useState(false);
+
   // Screen-ref mirror — keeps screenRef in sync without stale closure issues
   useEffect(() => {
     screenRef.current = state.screen;
@@ -151,7 +154,7 @@ export default function SamusRunGame() {
     const observer = new ResizeObserver(() => render());
     observer.observe(parent);
     return () => observer.disconnect();
-  }, [state.screen]);
+  }, [state.screen, spritesLoaded]);
 
   // Effect B: rAF game loop (playing state only)
   useEffect(() => {
@@ -338,6 +341,7 @@ export default function SamusRunGame() {
         if (cancelled) return;
         spritesRef.current.samus = samusImg;
         spritesRef.current.bg = bgImg;
+        setSpritesLoaded(true);
       })
       .catch((err) => {
         // Non-fatal: shape fallback Samus continues to render.

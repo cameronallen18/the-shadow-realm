@@ -19,12 +19,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Scaffold Next.js project, wire GitHub to Vercel, verify live deploy
 - [x] **Phase 2: Landing Page** - Build dark visual identity, header, blurb, and favicon
 - [x] **Phase 3: Project Catalog** - Add catalog section and integrate math flash card game (completed 2026-04-15)
-- [ ] **Phase 4: Game Shell** - Catalog entry, route, SSR guard, and overlay screens
-- [ ] **Phase 5: Canvas and Environment** - Viewport-filling canvas, retina scaling, Norfair visuals, and Samus sprites
+- [x] **Phase 4: Game Shell** - Catalog entry, route, SSR guard, and overlay screens (completed 2026-04-17)
+- [x] **Phase 5: Canvas and Environment** - Viewport-filling canvas, retina scaling, Norfair visuals, and Samus sprites (completed 2026-04-22)
 - [x] **Phase 6: Physics and Input** - Game loop, gravity/jump mechanics, obstacle scrolling, speed progression, and unified input (completed 2026-04-23)
 - [x] **Phase 7: Collision, Scoring, and Audio** - Hit detection, score counter, localStorage high score, and all sound effects (completed 2026-04-24)
-- [ ] **Phase 8: Asset Pipeline** - Sprite PNGs committed to public/sprites/ and confirmed loadable at production URL
-- [ ] **Phase 9: Sprite Animation** - Samus renders from real sprite sheet with idle frame, looping spin jump, screw attack distinction, and correct hitbox
+- [x] **Phase 8: Asset Pipeline** - Sprite PNGs committed to public/sprites/ and confirmed loadable at production URL (completed 2026-04-24)
+- [x] **Phase 9: Sprite Animation** - Samus renders from real sprite sheet with idle frame, looping spin jump, screw attack distinction, and correct hitbox (completed 2026-04-27)
 - [ ] **Phase 10: Background Scroll** - Norfair background tiles scroll at fixed independent speed with seamless wrap
 
 ## Phase Details
@@ -162,8 +162,8 @@ Plans:
   6. Collision hitbox constants (`COLLISION.samusWidth`, `COLLISION.samusHeight`) are updated to match the visible body of the real sprite (excluding transparent padding), verified by overlaying a debug rect
 **Plans:** 2 plans
 Plans:
-- [ ] 09-01-PLAN.md — Add drawSamusSprite, wire AnimState in Effect B, extend drawScene signature, fix WR-02/WR-03/IN-03
-- [ ] 09-02-PLAN.md — DEBUG_HITBOX visual tuning checkpoint, update COLLISION constants to match real sprite body
+- [x] 09-01-PLAN.md — Add drawSamusSprite, wire AnimState in Effect B, extend drawScene signature, fix WR-02/WR-03/IN-03
+- [x] 09-02-PLAN.md — DEBUG_HITBOX visual tuning checkpoint, update COLLISION constants to match real sprite body
 
 ### Phase 10: Background Scroll
 **Goal**: The Norfair background tiles scroll seamlessly in a loop at a fixed speed that is fully independent of game speed, and the solid-fill fallback is preserved
@@ -190,9 +190,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Landing Page | 2/2 | Complete | 2026-04-14 |
 | 3. Project Catalog | 2/2 | Complete | 2026-04-15 |
 | 4. Game Shell | 1/1 | Complete | 2026-04-17 |
-| 5. Canvas and Environment | 0/2 | Planning complete | - |
+| 5. Canvas and Environment | 2/2 | Complete | 2026-04-22 |
 | 6. Physics and Input | 2/2 | Complete | 2026-04-23 |
 | 7. Collision, Scoring, and Audio | 2/2 | Complete | 2026-04-24 |
-| 8. Asset Pipeline | 0/1 | Planning complete | - |
-| 9. Sprite Animation | 0/2 | Planning complete | - |
+| 8. Asset Pipeline | 1/1 | Complete | 2026-04-24 |
+| 9. Sprite Animation | 2/2 | Complete | 2026-04-27 |
 | 10. Background Scroll | 0/? | Not started | - |
