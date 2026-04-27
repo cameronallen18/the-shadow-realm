@@ -57,7 +57,7 @@ function drawScene(
   width: number,
   height: number,
   physics?: GamePhysicsState,
-  sprites?: { samus: HTMLCanvasElement | null; bg: HTMLImageElement | null },
+  sprites?: { samus: HTMLImageElement | null; bg: HTMLImageElement | null },
   animState?: { frame: number; accumulator: number; isScrewAttack: boolean }
 ): void {
   ctx.clearRect(0, 0, width, height);
@@ -114,11 +114,10 @@ export default function SamusRunGame() {
   const audioRef = useRef<AudioManager | null>(null);
 
   // spritesRef — loaded once on mount by Effect D.
-  // samus: offscreen HTMLCanvasElement with magenta converted to alpha.
-  // bg: HTMLImageElement for norfair_upper.png (already RGBA, no conversion needed).
+  // samus.png is pre-converted RGBA (background stripped at build time via sharp).
   // Both start null; Phase 9 draw calls must gate on samus !== null.
   const spritesRef = useRef<{
-    samus: HTMLCanvasElement | null;
+    samus: HTMLImageElement | null;
     bg: HTMLImageElement | null;
   }>({ samus: null, bg: null });
 
@@ -317,8 +316,7 @@ export default function SamusRunGame() {
   }, [handleInput]);
 
   // Effect D: Load sprite PNGs once on mount.
-  // samus.png uses RGB mode with magenta (#FF00FF) as transparency key — must be
-  // converted to alpha via offscreen canvas. norfair_upper.png is already RGBA.
+  // samus.png is pre-converted RGBA (background stripped via sharp at build time).
   // Both are same-origin assets in public/sprites/ — no CORS issue.
   useEffect(() => {
     function loadImage(src: string): Promise<HTMLImageElement> {
@@ -330,42 +328,6 @@ export default function SamusRunGame() {
       });
     }
 
-    function convertMagentaToAlpha(img: HTMLImageElement): HTMLCanvasElement {
-      // Draw source image onto an offscreen canvas, sample pixel (0,0) as the background
-      // key color, then zero out all pixels within tolerance of that color.
-      // Sampling the key rather than hardcoding handles any background color the sheet uses.
-      // Do NOT use OffscreenCanvas — iOS Safari silently blacks out excess instances.
-      const offscreen = document.createElement("canvas");
-      offscreen.width = img.naturalWidth;
-      offscreen.height = img.naturalHeight;
-      const ctx = offscreen.getContext("2d");
-      if (!ctx) return offscreen;
-
-      ctx.drawImage(img, 0, 0);
-      const imageData = ctx.getImageData(0, 0, offscreen.width, offscreen.height);
-      const data = imageData.data; // Uint8ClampedArray: [r, g, b, a, r, g, b, a, ...]
-
-      // Use top-left pixel as the background key color
-      const keyR = data[0], keyG = data[1], keyB = data[2];
-      const TOLERANCE = 30;
-
-      for (let i = 0; i < data.length; i += 4) {
-        if (
-          Math.abs(data[i] - keyR) <= TOLERANCE &&
-          Math.abs(data[i + 1] - keyG) <= TOLERANCE &&
-          Math.abs(data[i + 2] - keyB) <= TOLERANCE
-        ) {
-          data[i] = 0;
-          data[i + 1] = 0;
-          data[i + 2] = 0;
-          data[i + 3] = 0;
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-      return offscreen;
-    }
-
     let cancelled = false;
 
     Promise.all([
@@ -374,12 +336,11 @@ export default function SamusRunGame() {
     ])
       .then(([samusImg, bgImg]) => {
         if (cancelled) return;
-        spritesRef.current.samus = convertMagentaToAlpha(samusImg);
+        spritesRef.current.samus = samusImg;
         spritesRef.current.bg = bgImg;
       })
       .catch((err) => {
         // Non-fatal: shape fallback Samus continues to render.
-        // Logged to console for debugging; game runs normally.
         console.warn("[Effect D] Sprite load failed:", err);
       });
 

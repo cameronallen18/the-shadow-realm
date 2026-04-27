@@ -100,7 +100,7 @@ const DEBUG_HITBOX = false;
  */
 export function drawSamusSprite(
   ctx: CanvasRenderingContext2D,
-  spritesCanvas: HTMLCanvasElement,
+  spritesCanvas: HTMLImageElement,
   x: number,
   y: number,
   scale: number,
