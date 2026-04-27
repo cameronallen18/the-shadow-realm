@@ -324,7 +324,7 @@ export default function SamusRunGame() {
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = () => reject(new Error(`Failed to load sprite: ${src}`));
-        img.src = src;
+        img.src = src + "?v=3";
       });
     }
 
