@@ -177,7 +177,7 @@ export default function SamusRunGame() {
     let lastScore = 0;
 
     // AnimState lives in Effect B closure per D-10 — auto-resets on game restart
-    let animState = {
+    const animState = {
       frame: 0,
       accumulator: 0,
       isScrewAttack: false,
