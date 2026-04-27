@@ -107,28 +107,17 @@ export function drawSamusSprite(
   animState: AnimState | undefined,
   isAirborne: boolean
 ): void {
-  // Ground state: caller is responsible for shape fallback — only draw sprite when airborne.
-  if (!isAirborne) return;
+  const { cellSize, contentSize, contentOffset, runRight, screwAttackL } = SPRITE_LAYOUT;
 
-  const { cellSize, contentSize, contentOffset, spinJump, screwAttackR } = SPRITE_LAYOUT;
-
-  // Determine which section and frame to draw
-  let section: { sy: number; frames: number };
-  let frameIndex = 0;
-
-  if (animState?.isScrewAttack) {
-    section = screwAttackR;
-    frameIndex = animState.frame;
-  } else {
-    section = spinJump;
-    frameIndex = animState?.frame ?? 0;
-  }
+  // Ground → running animation; air (first or second jump) → space jump energy vortex
+  const section = isAirborne ? screwAttackL : runRight;
+  const frameIndex = (animState?.frame ?? 0) % section.frames;
 
   // Source rect in the sprite sheet
   const sx = Math.floor(frameIndex * cellSize + contentOffset);
   const sy = Math.floor(section.sy + contentOffset);
-  const sw = contentSize - 3; // 78 — row/col 95 of each 96px cell is a blue separator; sample only through row 94
-  const sh = contentSize - 3; // 78
+  const sw = contentSize - 4; // 77 — blue section separator sits at cell row 94 or 95; sample through row 93 max
+  const sh = contentSize - 4; // 77
 
   // Destination rect on canvas
   const dw = Math.floor(sw * scale);

@@ -60,8 +60,6 @@ export const SPRITE_LAYOUT = {
   contentOffset: 17,    // px — x and y offset from cell origin to sprite content
 
   // Section row Y-origins in the sprite sheet (absolute px from top of PNG)
-  // idle frame (sy:49) is front-facing — shape fallback used for ground state instead
-  spinJump:     { sy: 3249, frames: 9 },  // section 1A — 9-frame spin cycle (smooth, correct rotation)
-  screwAttackR: { sy: 3377, frames: 9 },  // section 1B — facing right, space jump (9 frames)
-  screwAttackL: { sy: 3505, frames: 9 },  // section 1C — facing left,  space jump (9 frames)
+  runRight:     { sy: 185,  frames: 4 },  // section 01 — facing right, running (4 frames)
+  screwAttackL: { sy: 3505, frames: 9 },  // section 1C — space jump energy vortex, spins forward
 } as const;

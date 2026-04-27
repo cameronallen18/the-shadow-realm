@@ -71,7 +71,7 @@ function drawScene(
     // Samus at physics-driven position
     const samusX = width * GAME.samusXRatio;
     const isAirborne = physics.samusY < height * GAME.floorRatio - 1;
-    if (sprites?.samus && isAirborne) {
+    if (sprites?.samus) {
       drawSamusSprite(ctx, sprites.samus, samusX, physics.samusY, GAME.samusScale, animState, isAirborne);
     } else if (isAirborne) {
       drawSamusJump(ctx, samusX, physics.samusY, GAME.samusScale);
@@ -180,6 +180,7 @@ export default function SamusRunGame() {
       accumulator: 0,
       isScrewAttack: false,
     };
+    let prevIsAirborne = false;
 
     const SPIN_FPS = 10;
     const FRAME_DURATION = 1 / SPIN_FPS; // 0.1s per frame
@@ -209,7 +210,7 @@ export default function SamusRunGame() {
       const isAirborne = game.samusY < canvasHeightRef.current * GAME.floorRatio - 1;
       const isOnFloor = !isAirborne;
 
-      // Consume pendingScrewAttack flag from physics state (set by handleInput when mid-air jump fires)
+      // Consume pendingScrewAttack flag (second jump mid-air)
       if (game.pendingScrewAttack) {
         animState.isScrewAttack = true;
         animState.frame = 0;
@@ -217,21 +218,24 @@ export default function SamusRunGame() {
         game.pendingScrewAttack = false;
       }
 
-      // Reset animation on landing
-      if (isOnFloor) {
+      // Reset animation on takeoff (ground→air transition)
+      if (!prevIsAirborne && isAirborne) {
         animState.isScrewAttack = false;
         animState.frame = 0;
         animState.accumulator = 0;
       }
+      // Clear screw attack flag on landing
+      if (isOnFloor) {
+        animState.isScrewAttack = false;
+      }
+      prevIsAirborne = isAirborne;
 
-      // Advance frames only while airborne
-      if (isAirborne) {
-        animState.accumulator += dt;
-        if (animState.accumulator >= FRAME_DURATION) {
-          animState.accumulator -= FRAME_DURATION; // subtract, not reset — preserves leftover for 120Hz accuracy
-          const section = animState.isScrewAttack ? SPRITE_LAYOUT.screwAttackR : SPRITE_LAYOUT.spinJump;
-          animState.frame = (animState.frame + 1) % section.frames;
-        }
+      // Advance frames always — running on ground, spinning in air
+      animState.accumulator += dt;
+      if (animState.accumulator >= FRAME_DURATION) {
+        animState.accumulator -= FRAME_DURATION; // subtract, not reset — preserves leftover for 120Hz accuracy
+        const section = isAirborne ? SPRITE_LAYOUT.screwAttackL : SPRITE_LAYOUT.runRight;
+        animState.frame = (animState.frame + 1) % section.frames;
       }
 
       // WR-03 fix: check game over BEFORE drawing the final frame
