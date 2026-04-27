@@ -79,12 +79,16 @@ function drawScene(
       drawSamusIdle(ctx, samusX, physics.samusY, GAME.samusScale);
     }
   } else {
-    // Static idle/gameover scene (shape fallback preserved)
+    // Static idle/gameover scene
     const obstacleX = width * GAME.obstacleXRatio;
     drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
     const samusX = width * GAME.samusXRatio;
     const samusY = height * GAME.floorRatio;
-    drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
+    if (sprites?.samus) {
+      drawSamusSprite(ctx, sprites.samus, samusX, samusY, GAME.samusScale, undefined, false);
+    } else {
+      drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
+    }
   }
 }
 
@@ -213,7 +217,7 @@ export default function SamusRunGame() {
       // Consume pendingScrewAttack flag (second jump mid-air)
       if (game.pendingScrewAttack) {
         animState.isScrewAttack = true;
-        animState.frame = 0;
+        animState.frame = 1; // skip frame 0 (upright standing pose in screwAttackL)
         animState.accumulator = 0;
         game.pendingScrewAttack = false;
       }
@@ -221,7 +225,7 @@ export default function SamusRunGame() {
       // Reset animation on takeoff (ground→air transition)
       if (!prevIsAirborne && isAirborne) {
         animState.isScrewAttack = false;
-        animState.frame = 0;
+        animState.frame = 1; // skip frame 0 (upright standing pose in screwAttackL)
         animState.accumulator = 0;
       }
       // Clear screw attack flag on landing

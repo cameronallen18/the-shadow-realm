@@ -116,8 +116,8 @@ export function drawSamusSprite(
   // Source rect in the sprite sheet
   const sx = Math.floor(frameIndex * cellSize + contentOffset);
   const sy = Math.floor(section.sy + contentOffset);
-  const sw = contentSize - 4; // 77 — blue section separator sits at cell row 94 or 95; sample through row 93 max
-  const sh = contentSize - 4; // 77
+  const sw = contentSize - 5; // 76 — keep sw wide; no horizontal blue line issue
+  const sh = contentSize - 11; // 70 — blue separator band starts at source offset 70 (y≈272); stop at 69
 
   // Destination rect on canvas
   const dw = Math.floor(sw * scale);
