@@ -71,7 +71,7 @@ function drawScene(
     // Samus at physics-driven position
     const samusX = width * GAME.samusXRatio;
     const isAirborne = physics.samusY < height * GAME.floorRatio - 1;
-    if (sprites?.samus) {
+    if (sprites?.samus && isAirborne) {
       drawSamusSprite(ctx, sprites.samus, samusX, physics.samusY, GAME.samusScale, animState, isAirborne);
     } else if (isAirborne) {
       drawSamusJump(ctx, samusX, physics.samusY, GAME.samusScale);
@@ -84,11 +84,7 @@ function drawScene(
     drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
     const samusX = width * GAME.samusXRatio;
     const samusY = height * GAME.floorRatio;
-    if (sprites?.samus) {
-      drawSamusSprite(ctx, sprites.samus, samusX, samusY, GAME.samusScale, undefined, false);
-    } else {
-      drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
-    }
+    drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
   }
 }
 
@@ -233,7 +229,7 @@ export default function SamusRunGame() {
         animState.accumulator += dt;
         if (animState.accumulator >= FRAME_DURATION) {
           animState.accumulator -= FRAME_DURATION; // subtract, not reset — preserves leftover for 120Hz accuracy
-          const section = animState.isScrewAttack ? SPRITE_LAYOUT.screwAttackR : SPRITE_LAYOUT.spinJumpR;
+          const section = animState.isScrewAttack ? SPRITE_LAYOUT.screwAttackR : SPRITE_LAYOUT.spinJump;
           animState.frame = (animState.frame + 1) % section.frames;
         }
       }

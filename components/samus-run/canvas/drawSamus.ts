@@ -107,32 +107,32 @@ export function drawSamusSprite(
   animState: AnimState | undefined,
   isAirborne: boolean
 ): void {
-  const { cellSize, contentSize, contentOffset, idle, spinJumpR, screwAttackR } = SPRITE_LAYOUT;
+  // Ground state: caller is responsible for shape fallback — only draw sprite when airborne.
+  if (!isAirborne) return;
+
+  const { cellSize, contentSize, contentOffset, spinJump, screwAttackR } = SPRITE_LAYOUT;
 
   // Determine which section and frame to draw
   let section: { sy: number; frames: number };
   let frameIndex = 0;
 
-  if (!isAirborne) {
-    section = idle;
-    frameIndex = 0; // idle is always frame 0 (1 frame, static)
-  } else if (animState?.isScrewAttack) {
+  if (animState?.isScrewAttack) {
     section = screwAttackR;
     frameIndex = animState.frame;
   } else {
-    section = spinJumpR;
+    section = spinJump;
     frameIndex = animState?.frame ?? 0;
   }
 
   // Source rect in the sprite sheet
   const sx = Math.floor(frameIndex * cellSize + contentOffset);
   const sy = Math.floor(section.sy + contentOffset);
-  const sw = contentSize; // 81
-  const sh = contentSize; // 81
+  const sw = contentSize - 2; // 79 — stay within cell boundary (17+81=98 overruns 96px cell by 2px)
+  const sh = contentSize - 2; // 79
 
   // Destination rect on canvas
-  const dw = Math.floor(contentSize * scale);
-  const dh = Math.floor(contentSize * scale);
+  const dw = Math.floor(sw * scale);
+  const dh = Math.floor(sh * scale);
   const dx = Math.floor(x - dw / 2);  // center anchor
   const dy = Math.floor(y - dh);      // bottom anchor (samusY is bottom of sprite)
 
@@ -140,15 +140,6 @@ export function drawSamusSprite(
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(spritesCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
   ctx.restore();
-
-  // Screw attack visual overlay — cool blue tint via screen blend
-  if (animState?.isScrewAttack && isAirborne) {
-    ctx.save();
-    ctx.globalCompositeOperation = "screen";
-    ctx.fillStyle = "rgba(80, 120, 255, 0.35)";
-    ctx.fillRect(dx, dy, dw, dh);
-    ctx.restore();
-  }
 
   // Debug hitbox overlay — flip DEBUG_HITBOX = true locally to tune COLLISION constants
   if (DEBUG_HITBOX) {
