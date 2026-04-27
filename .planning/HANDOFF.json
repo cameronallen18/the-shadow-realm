@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-04-27T05:32:16.827Z",
+  "phase": "09",
+  "phase_name": "sprite-animation",
+  "phase_dir": ".planning/phases/09-sprite-animation",
+  "plan": 2,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "Phase 9 UAT: fix idle canvas not re-rendering after sprite load", "status": "done", "commit": "9f5c305"},
+    {"id": 2, "name": "Phase 9 UAT: all 7 tests passed, VERIFICATION.md written", "status": "done", "commit": "9f5c305"},
+    {"id": 3, "name": "Post-UAT fix: correct spin direction (9-frame spinJump), remove blue overlay, fix cell overrun", "status": "done", "commit": "60f978f"}
+  ],
+  "remaining_tasks": [
+    {"id": 4, "name": "User iOS retest after sprite fixes", "status": "awaiting_user"},
+    {"id": 5, "name": "Phase 10: Background Scroll — discuss → plan → execute", "status": "not_started"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {"action": "Test the latest build on iOS Safari at the-shadow-realm.vercel.app/projects/samus-run", "context": "4 sprite bugs were fixed; user needs to verify rotation, ground facing, line, and blue box are resolved", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Use spinJump (section 1A, sy:3249, 9 frames) instead of spinJumpR (section 19, sy:3121, 2 frames)", "rationale": "9-frame animation is smooth and rotates correctly; 2-frame was choppy and rotated left", "phase": "09"},
+    {"decision": "Shape fallback (drawSamusIdle) for all ground states", "rationale": "idle sprite at sy:49 was front-facing, not right-facing; shape fallback avoids wrong-section problem", "phase": "09"},
+    {"decision": "Remove screw attack screen-blend overlay", "rationale": "globalCompositeOperation screen rendered as harsh opaque box on iOS Safari dark background", "phase": "09"},
+    {"decision": "Cap sprite sampling to 79px (was 81px)", "rationale": "17+81=98 overran 96px cell boundary by 2px, picking up inter-section colored pixels as line artifact", "phase": "09"}
+  ],
+  "uncommitted_files": [],
+  "next_action": "Run /gsd-autonomous to execute Phase 10: Background Scroll (discuss → plan → execute)",
+  "context_notes": "Phase 9 is complete (VERIFICATION.md written, all UAT passed). Phase 10 is the final milestone phase. ROADMAP.md is clean. Dev server may need to be restarted."
+}
