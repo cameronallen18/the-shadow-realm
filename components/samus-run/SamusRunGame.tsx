@@ -6,7 +6,7 @@ import { setupCanvas } from "./canvas/setupCanvas";
 import { drawEnvironment } from "./canvas/drawEnvironment";
 import { drawSamusIdle, drawSamusJump, drawSamusSprite } from "./canvas/drawSamus";
 import { drawRockWall } from "./canvas/drawObstacleShape";
-import { PHYSICS, GAME, SPRITE_LAYOUT } from "./constants";
+import { PHYSICS, GAME, SPRITE_LAYOUT, BG_SCROLL_SPEED, TILE_WIDTH } from "./constants";
 import { GamePhysicsState, createInitialGameState, updateGame, triggerJump } from "./gameLoop";
 import { AudioManager, createAudioManager } from "./audioManager";
 
@@ -58,10 +58,11 @@ function drawScene(
   height: number,
   physics?: GamePhysicsState,
   sprites?: { samus: HTMLImageElement | null; bg: HTMLImageElement | null },
-  animState?: { frame: number; accumulator: number; isScrewAttack: boolean }
+  animState?: { frame: number; accumulator: number; isScrewAttack: boolean },
+  bgScrollOffset?: number
 ): void {
   ctx.clearRect(0, 0, width, height);
-  drawEnvironment(ctx, width, height);
+  drawEnvironment(ctx, width, height, sprites?.bg, bgScrollOffset ?? 0);
 
   if (physics && screen === "playing") {
     // Dynamic obstacle positions from physics state
@@ -186,6 +187,12 @@ export default function SamusRunGame() {
     };
     let prevIsAirborne = false;
 
+    // bgScrollOffset lives in Effect B closure per D-06 — auto-resets to 0 on
+    // game restart because Effect B re-runs when state.screen → "playing".
+    // Modulo TILE_WIDTH each frame keeps the value bounded to [0, 512) and
+    // avoids floating-point growth over long sessions.
+    let bgScrollOffset = 0;
+
     const SPIN_FPS = 10;
     const FRAME_DURATION = 1 / SPIN_FPS; // 0.1s per frame
 
@@ -242,6 +249,10 @@ export default function SamusRunGame() {
         animState.frame = (animState.frame + 1) % section.frames;
       }
 
+      // Advance background scroll offset (independent of speedMultiplier per D-05).
+      // Modulo TILE_WIDTH bounds the value to [0, 512) — prevents float growth.
+      bgScrollOffset = (bgScrollOffset + BG_SCROLL_SPEED * dt) % TILE_WIDTH;
+
       // WR-03 fix: check game over BEFORE drawing the final frame
       if (game.gameOver) {
         audioRef.current?.playDeath();
@@ -256,7 +267,7 @@ export default function SamusRunGame() {
           const r = cvs.getBoundingClientRect();
           canvasWidthRef.current = r.width;
           canvasHeightRef.current = r.height;
-          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState);
+          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState, bgScrollOffset);
         }
       }
 
