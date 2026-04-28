@@ -174,8 +174,9 @@ Plans:
   2. Background scroll speed does not change when the game speed multiplier increases (encoded as a separate `BG_SCROLL_SPEED` constant, not derived from `speedMultiplier`)
   3. Background scroll offset resets to 0 on game restart without a page reload
   4. When the background PNG is not loaded, the existing solid-fill environment renders as before (no regression)
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 1 plan
+Plans:
+- [x] 10-01-PLAN.md — Add BG_SCROLL_SPEED/TILE_WIDTH constants, drawBackground helper + drawEnvironment signature extension, bgScrollOffset closure variable in Effect B with per-frame advance and drawScene threading
 
 ---
 
@@ -195,4 +196,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Collision, Scoring, and Audio | 2/2 | Complete | 2026-04-24 |
 | 8. Asset Pipeline | 1/1 | Complete | 2026-04-24 |
 | 9. Sprite Animation | 2/2 | Complete | 2026-04-27 |
-| 10. Background Scroll | 0/? | Not started | - |
+| 10. Background Scroll | 1/1 | Executing | - |
