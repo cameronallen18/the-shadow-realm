@@ -43,6 +43,18 @@ export const PHYSICS = {
 // Wide screens see more of the level ahead rather than larger gaps.
 export const OBSTACLE_SPACING_PX = 480;
 
+// Background scroll speed — fixed CSS px/s, decoupled from PHYSICS.baseScrollSpeed.
+// Decoupled per v1.2 roadmap: game-speed changes (speedMultiplier) must NOT affect
+// background speed. 70 px/s is the mid-point of the 60-80 ambient range (D-45) —
+// ~32% of PHYSICS.baseScrollSpeed (220) so the background reads as calm atmosphere.
+export const BG_SCROLL_SPEED = 70;
+
+// Natural tile width of public/sprites/norfair_upper.png (512 × 384 RGBA).
+// Used as the modulo wrap value for bgScrollOffset and the step size in the
+// tile draw loop. Stored as a constant rather than reading bg.naturalWidth
+// each frame.
+export const TILE_WIDTH = 512;
+
 // Collision hitbox — reduced to ~65% of sprite size per D-04 (60-70% range)
 export const COLLISION = {
   hitboxScale: 0.65,   // 65% of sprite size per D-04 (~60-70% range)
