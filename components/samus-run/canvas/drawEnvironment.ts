@@ -1,22 +1,64 @@
-import { NORFAIR } from "../constants";
+import { NORFAIR, TILE_WIDTH } from "../constants";
 
 /**
- * Draws the Norfair cave environment: sky, lava floor, shimmer line, ceiling detail.
+ * Draws the loaded Norfair background image tiled horizontally across the full
+ * canvas, with `offset` shifting the tile origin left to produce continuous
+ * scroll. Uses pixel-perfect rendering (imageSmoothingEnabled = false, all
+ * drawImage args through Math.floor()) consistent with QUAL-01.
+ *
+ * Loop draws tiles starting at x = -Math.floor(offset) (in range [-511, 0])
+ * and steps by TILE_WIDTH (512) until x >= width. Because `offset` is bounded
+ * to [0, TILE_WIDTH) by the caller, the leftmost tile always covers x=0
+ * seamlessly — no blank gap possible at the wrap boundary.
+ */
+function drawBackground(
+  ctx: CanvasRenderingContext2D,
+  bg: HTMLImageElement,
+  width: number,
+  height: number,
+  offset: number
+): void {
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  const tileH = Math.floor(height);
+  const startX = -Math.floor(offset);
+
+  for (let x = startX; x < width; x += TILE_WIDTH) {
+    ctx.drawImage(bg, Math.floor(x), 0, TILE_WIDTH, tileH);
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Draws the Norfair cave environment: tiled background (or solid-fill fallback),
+ * lava floor, shimmer line, ceiling detail.
+ *
+ * When `bg` is provided, the image is tiled horizontally with `bgOffset` shift.
+ * When `bg` is null/undefined, the original solid-fill sky + midground render
+ * (Phase 9 behavior) — no regression.
+ *
+ * Lava floor, shimmer, ground line, and ceiling stalactites always draw on top.
  */
 export function drawEnvironment(
   ctx: CanvasRenderingContext2D,
   width: number,
-  height: number
+  height: number,
+  bg?: HTMLImageElement | null,
+  bgOffset?: number
 ): void {
-  // 1. Sky / cave background — fills entire canvas
-  ctx.fillStyle = NORFAIR.sky;
-  ctx.fillRect(0, 0, width, height);
+  if (bg) {
+    drawBackground(ctx, bg, width, height, bgOffset ?? 0);
+  } else {
+    // Fallback: existing solid fills (D-11 — no regression when bg unloaded)
+    ctx.fillStyle = NORFAIR.sky;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = NORFAIR.midground;
+    ctx.fillRect(0, 0, width, height * 0.3);
+  }
 
-  // 2. Midground cave wall band (top 30%)
-  ctx.fillStyle = NORFAIR.midground;
-  ctx.fillRect(0, 0, width, height * 0.3);
-
-  // 3. Lava floor (bottom 15% of viewport)
+  // 3. Lava floor (bottom 15% of viewport) — always drawn on top of background
   const floorY = height * 0.85;
   ctx.fillStyle = NORFAIR.lavaGlow;
   ctx.fillRect(0, floorY, width, height - floorY);
