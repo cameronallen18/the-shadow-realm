@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Collision, Scoring, and Audio** - Hit detection, score counter, localStorage high score, and all sound effects (completed 2026-04-24)
 - [x] **Phase 8: Asset Pipeline** - Sprite PNGs committed to public/sprites/ and confirmed loadable at production URL (completed 2026-04-24)
 - [x] **Phase 9: Sprite Animation** - Samus renders from real sprite sheet with idle frame, looping spin jump, screw attack distinction, and correct hitbox (completed 2026-04-27)
-- [ ] **Phase 10: Background Scroll** - Norfair background tiles scroll at fixed independent speed with seamless wrap
+- [x] **Phase 10: Background Scroll** - Norfair background tiles scroll at fixed independent speed with seamless wrap (completed 2026-04-28)
 
 ## Phase Details
 
@@ -196,4 +196,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Collision, Scoring, and Audio | 2/2 | Complete | 2026-04-24 |
 | 8. Asset Pipeline | 1/1 | Complete | 2026-04-24 |
 | 9. Sprite Animation | 2/2 | Complete | 2026-04-27 |
-| 10. Background Scroll | 1/1 | Executing | - |
+| 10. Background Scroll | 1/1 | Complete | 2026-04-28 |

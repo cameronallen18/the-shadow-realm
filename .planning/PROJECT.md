@@ -30,13 +30,12 @@ A live, publicly accessible home base that deploys cleanly from GitHub and can a
 - [x] Samus Run canvas fills viewport on all devices, DPR-aware, Norfair environment drawn with both Samus sprite states — validated in Phase 5
 - [x] Samus moves under gravity, responds to keyboard/mouse/touch input, obstacles scroll with randomized gaps and speed progression — validated in Phase 6
 - [x] Samus Run game fully winnable/losable — AABB collision, per-gap scoring, live HUD, localStorage high score, Web Audio sounds — validated in Phase 7
+- [x] Samus Run uses real Super Metroid sprite animation — idle, looping spin jump, screw attack — validated in Phase 9
+- [x] Canvas renders Norfair background tiles scrolling at fixed speed independent of game speed — validated in Phase 10
 
 ### Active (v1.2)
 
-- [ ] Samus Run uses real Super Metroid idle/breathing sprite animation
-- [ ] Samus Run uses real jump animation frames from Super Metroid
-- [ ] Samus Run uses real screw attack animation frames from Super Metroid
-- [ ] Canvas renders one authentic Super Metroid level environment (background + obstacle textures)
+*All v1.2 requirements validated — see Validated section below.*
 
 ### Out of Scope
 
@@ -86,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-24 — v1.2 Pixel Perfect milestone started*
+*Last updated: 2026-04-28 — v1.2 Pixel Perfect milestone complete*

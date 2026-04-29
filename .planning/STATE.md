@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Samus Run
-status: executing
-stopped_at: Phase 10 context gathered
-last_updated: "2026-04-28T01:35:30.153Z"
-last_activity: 2026-04-25 -- Phase --phase execution started
+milestone: v1.2
+milestone_name: Pixel Perfect
+status: complete
+stopped_at: Phase 10 complete — v1.2 milestone done
+last_updated: "2026-04-28T03:30:00.000Z"
+last_activity: 2026-04-28 — Phase 10 Background Scroll complete
 progress:
-  total_phases: 7
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 10
+  completed_phases: 10
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -20,21 +20,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-24)
 
 **Core value:** A live, publicly accessible home base that deploys cleanly from GitHub and can absorb new projects without turning into a mess.
-**Current focus:** Phase --phase — 09
+**Current focus:** v1.2 Pixel Perfect — MILESTONE COMPLETE
 
 ## Current Position
 
-Phase: --phase (09) — EXECUTING
-Plan: 1 of --name
-Status: Executing Phase --phase
-Last activity: 2026-04-25 -- Phase --phase execution started
+Phase: 10 (Background Scroll) — COMPLETE
+Status: All phases complete — v1.2 Pixel Perfect milestone done
+Last activity: 2026-04-28 — Phase 10 verified and pushed
 
-Progress (v1.2): [░░░░░░░░░░] 0%
+Progress (v1.2): [██████████] 100%
 
 ```
-Phase 8: Asset Pipeline      [ ] Not started
-Phase 9: Sprite Animation    [ ] Not started
-Phase 10: Background Scroll  [ ] Not started
+Phase 8: Asset Pipeline      [x] Complete 2026-04-24
+Phase 9: Sprite Animation    [x] Complete 2026-04-27
+Phase 10: Background Scroll  [x] Complete 2026-04-28
 ```
 
 ## Performance Metrics
@@ -106,8 +105,6 @@ Phase 10: Background Scroll  [ ] Not started
 ### Pending Todos
 
 - Fix app/icon.svg to use outlined path instead of font-family="Georgia" (WR-01 from Phase 2 review)
-- Phase 9 start: measure downloaded sprite sheet in image editor to fill SPRITE_LAYOUT constants (frameW, frameH, row indices) — budget 30 min before writing draw code
-- Phase 9 start: verify downloaded PNG uses alpha transparency (not magenta key color) before writing draw code
 
 ### Blockers/Concerns
 
@@ -116,7 +113,7 @@ None.
 ## Session Continuity
 
 Last session: --stopped-at
-Stopped at: Phase 10 context gathered
+Stopped at: Phase 10 UI-SPEC approved
 Resume file: --resume-file
 
-**Planned Phase:** 9 (Sprite Animation) — 2 plans — 2026-04-25T05:02:03.024Z
+**Planned Phase:** 10 (Background Scroll) — 1 plans — 2026-04-28T02:32:49.073Z

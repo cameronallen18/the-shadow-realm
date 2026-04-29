@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-27T05:32:16.827Z",
+  "timestamp": "2026-04-27T06:30:00.000Z",
   "phase": "09",
   "phase_name": "sprite-animation",
   "phase_dir": ".planning/phases/09-sprite-animation",
@@ -11,23 +11,45 @@
   "completed_tasks": [
     {"id": 1, "name": "Phase 9 UAT: fix idle canvas not re-rendering after sprite load", "status": "done", "commit": "9f5c305"},
     {"id": 2, "name": "Phase 9 UAT: all 7 tests passed, VERIFICATION.md written", "status": "done", "commit": "9f5c305"},
-    {"id": 3, "name": "Post-UAT fix: correct spin direction (9-frame spinJump), remove blue overlay, fix cell overrun", "status": "done", "commit": "60f978f"}
+    {"id": 3, "name": "Post-UAT fix: correct spin direction, remove blue overlay, fix cell overrun", "status": "done", "commit": "60f978f"},
+    {"id": 4, "name": "Fix blue line (sh 79→78): was still hitting section separator row", "status": "done", "commit": "f093fca"},
+    {"id": 5, "name": "Replace shape fallback with running sprite + space jump for all jumps", "status": "done", "commit": "92cebea"}
   ],
   "remaining_tasks": [
-    {"id": 4, "name": "User iOS retest after sprite fixes", "status": "awaiting_user"},
-    {"id": 5, "name": "Phase 10: Background Scroll — discuss → plan → execute", "status": "not_started"}
+    {
+      "id": 6,
+      "name": "Fix blue line still visible on ground (iOS confirmed)",
+      "status": "open",
+      "detail": "sh=77 still clips the section 01 (runRight) separator. Reduce sh to 76 or check exact separator row. In drawSamus.ts: sw = sh = contentSize - 4 currently (=77). Try contentSize - 5 (=76). Verify with Playwright pixel scan after change."
+    },
+    {
+      "id": 7,
+      "name": "Fix start/game-over screen showing old block character",
+      "status": "open",
+      "detail": "Static scenes (screen !== 'playing') use drawSamusIdle shape in drawScene's else branch (line ~82-88 in SamusRunGame.tsx). Need to use sprite frame 0 of runRight for these screens. Pass spritesRef.current to the static drawScene call at line ~143, add sprite draw path in the else branch."
+    },
+    {
+      "id": 8,
+      "name": "Skip frame 0 of screwAttackL (non-spinning upright frame)",
+      "status": "open",
+      "detail": "screwAttackL (sy=3505) frame 0 is the upright standing pose — causes a visible static flash at jump start before spinning begins. Fix: start jump animation at frame 1 instead of 0. In SamusRunGame.tsx, on takeoff reset: set animState.frame = 1 (not 0). Also on pendingScrewAttack reset: frame = 1."
+    },
+    {
+      "id": 9,
+      "name": "Phase 10: Background Scroll — discuss → plan → execute",
+      "status": "not_started",
+      "detail": "Goal: Norfair background tiles scroll at fixed independent speed with seamless wrap. Success criteria: ENV-01, ENV-02. No plans exist yet. After Phase 9 bugs are fixed, proceed to /gsd-discuss-phase 10 or /gsd-plan-phase 10."
+    }
   ],
   "blockers": [],
-  "human_actions_pending": [
-    {"action": "Test the latest build on iOS Safari at the-shadow-realm.vercel.app/projects/samus-run", "context": "4 sprite bugs were fixed; user needs to verify rotation, ground facing, line, and blue box are resolved", "blocking": false}
-  ],
+  "human_actions_pending": [],
   "decisions": [
-    {"decision": "Use spinJump (section 1A, sy:3249, 9 frames) instead of spinJumpR (section 19, sy:3121, 2 frames)", "rationale": "9-frame animation is smooth and rotates correctly; 2-frame was choppy and rotated left", "phase": "09"},
-    {"decision": "Shape fallback (drawSamusIdle) for all ground states", "rationale": "idle sprite at sy:49 was front-facing, not right-facing; shape fallback avoids wrong-section problem", "phase": "09"},
-    {"decision": "Remove screw attack screen-blend overlay", "rationale": "globalCompositeOperation screen rendered as harsh opaque box on iOS Safari dark background", "phase": "09"},
-    {"decision": "Cap sprite sampling to 79px (was 81px)", "rationale": "17+81=98 overran 96px cell boundary by 2px, picking up inter-section colored pixels as line artifact", "phase": "09"}
+    {"decision": "runRight section (sy=185, 4 frames) for ground state — replaces shape fallback", "rationale": "Section 01 'Facing right - normal' found at sy=185 in sprite sheet; user confirmed shape fallback must be removed", "phase": "09"},
+    {"decision": "screwAttackL (section 1C, sy=3505) for ALL airborne states (both first and second jump)", "rationale": "1C has the space jump energy vortex visual (user wanted 'space jump not basic spin') AND spins forward. Section 1A was basic morph ball spin; 1B spins left.", "phase": "09"},
+    {"decision": "sw=sh=77 (contentSize-4) globally", "rationale": "Blue section separator sits at row 94 within the runRight cell (not row 95 as in spin sections). Need 77 to stay clear of row 278. May need 76 — still TBD.", "phase": "09"},
+    {"decision": "Frame counter advances on ground too; resets on takeoff not landing", "rationale": "Running animation needs to cycle; jump should start fresh. prevIsAirborne tracks ground→air transition.", "phase": "09"}
   ],
   "uncommitted_files": [],
-  "next_action": "Run /gsd-autonomous to execute Phase 10: Background Scroll (discuss → plan → execute)",
-  "context_notes": "Phase 9 is complete (VERIFICATION.md written, all UAT passed). Phase 10 is the final milestone phase. ROADMAP.md is clean. Dev server may need to be restarted."
+  "next_action": "Fix the 3 remaining Phase 9 bugs (tasks 6, 7, 8) then proceed to Phase 10. Start with task 6 (sh=76 change in drawSamus.ts) — it's a one-liner. Task 7 (static screen sprite) requires passing sprites to the else-branch drawScene call. Task 8 (skip frame 0) is a one-line change to the frame reset value.",
+  "context_notes": "Phase 9 has 3 open bugs found during iOS user testing this session. All are small fixes (<5 lines each). v0.1.13 is current production. Key files: components/samus-run/canvas/drawSamus.ts (sh value), components/samus-run/SamusRunGame.tsx (static screen draw + frame reset). Phase 10 is completely untouched — no CONTEXT.md, no PLAN.md, no plans."
 }
