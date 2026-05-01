@@ -12,7 +12,7 @@ export default function Home() {
           my digital junk drawer
         </p>
         <p className="text-[#ededed]/30 text-xs tracking-wide">
-          v0.1.17
+          v0.1.18
         </p>
       </div>
 

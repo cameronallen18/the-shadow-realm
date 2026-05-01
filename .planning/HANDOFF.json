@@ -1,55 +1,44 @@
 {
   "version": "1.0",
-  "timestamp": "2026-04-27T06:30:00.000Z",
-  "phase": "09",
-  "phase_name": "sprite-animation",
-  "phase_dir": ".planning/phases/09-sprite-animation",
-  "plan": 2,
+  "timestamp": "2026-05-01T14:48:48.853Z",
+  "phase": null,
+  "phase_name": "ad-hoc bug fixes (samus-run)",
+  "phase_dir": null,
+  "plan": null,
   "task": null,
   "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Phase 9 UAT: fix idle canvas not re-rendering after sprite load", "status": "done", "commit": "9f5c305"},
-    {"id": 2, "name": "Phase 9 UAT: all 7 tests passed, VERIFICATION.md written", "status": "done", "commit": "9f5c305"},
-    {"id": 3, "name": "Post-UAT fix: correct spin direction, remove blue overlay, fix cell overrun", "status": "done", "commit": "60f978f"},
-    {"id": 4, "name": "Fix blue line (sh 79→78): was still hitting section separator row", "status": "done", "commit": "f093fca"},
-    {"id": 5, "name": "Replace shape fallback with running sprite + space jump for all jumps", "status": "done", "commit": "92cebea"}
+    {"id": 1, "name": "Fix background: replace norfair_upper.png tileset atlas with procedural cave draw", "status": "done", "commit": "f9688c8"},
+    {"id": 2, "name": "Fix hitbox: bottom-anchor collision (samusY = feet, not center)", "status": "done", "commit": "f9688c8"},
+    {"id": 3, "name": "Fix sprite left border line: sx +1 to skip black cell border pixel", "status": "done", "commit": "f9688c8"},
+    {"id": 4, "name": "Fix sprite bottom border line: reduce sh from 70 to 56, anchor dy to foot row 42", "status": "done", "commit": "f9688c8"},
+    {"id": 5, "name": "Remove block figure: delete drawSamusIdle + drawSamusJump", "status": "done", "commit": "f9688c8"},
+    {"id": 6, "name": "Add Playwright tests (7 tests, all passing)", "status": "done", "commit": "9e97432"}
   ],
   "remaining_tasks": [
     {
-      "id": 6,
-      "name": "Fix blue line still visible on ground (iOS confirmed)",
-      "status": "open",
-      "detail": "sh=77 still clips the section 01 (runRight) separator. Reduce sh to 76 or check exact separator row. In drawSamus.ts: sw = sh = contentSize - 4 currently (=77). Try contentSize - 5 (=76). Verify with Playwright pixel scan after change."
-    },
-    {
       "id": 7,
-      "name": "Fix start/game-over screen showing old block character",
+      "name": "Fix running animation behavior: idle=static, gameplay-ground=running",
       "status": "open",
-      "detail": "Static scenes (screen !== 'playing') use drawSamusIdle shape in drawScene's else branch (line ~82-88 in SamusRunGame.tsx). Need to use sprite frame 0 of runRight for these screens. Pass spritesRef.current to the static drawScene call at line ~143, add sprite draw path in the else branch."
-    },
-    {
-      "id": 8,
-      "name": "Skip frame 0 of screwAttackL (non-spinning upright frame)",
-      "status": "open",
-      "detail": "screwAttackL (sy=3505) frame 0 is the upright standing pose — causes a visible static flash at jump start before spinning begins. Fix: start jump animation at frame 1 instead of 0. In SamusRunGame.tsx, on takeoff reset: set animState.frame = 1 (not 0). Also on pendingScrewAttack reset: frame = 1."
-    },
-    {
-      "id": 9,
-      "name": "Phase 10: Background Scroll — discuss → plan → execute",
-      "status": "not_started",
-      "detail": "Goal: Norfair background tiles scroll at fixed independent speed with seamless wrap. Success criteria: ENV-01, ENV-02. No plans exist yet. After Phase 9 bugs are fixed, proceed to /gsd-discuss-phase 10 or /gsd-plan-phase 10."
+      "detail": "WRONG behavior shipped: idle screen now has RAF loop animating Samus running in place (SamusRunGame.tsx Effect A). User wants STATIC standing pose on idle/gameover screens, and running animation ONLY when Samus is on the ground during active gameplay. In-game ground animation code is correct (Effect B uses runRight when !isAirborne) but Samus immediately jumps at game start (pendingJump=true) so the running animation is barely visible. Fix: (1) Revert Effect A back to single-render + ResizeObserver (static frame 0, no RAF loop). (2) Verify in-game ground running is visible during brief landing moments. (3) Fix the Playwright test — it currently passes by testing idle-screen animation which is the wrong behavior."
     }
   ],
   "blockers": [],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {
+      "action": "Verify fixes on production (Vercel deploy of v0.1.17)",
+      "context": "Pushed to main, Vercel auto-deploys. Check background, hitbox, sprite borders, idle static pose.",
+      "blocking": false
+    }
+  ],
   "decisions": [
-    {"decision": "runRight section (sy=185, 4 frames) for ground state — replaces shape fallback", "rationale": "Section 01 'Facing right - normal' found at sy=185 in sprite sheet; user confirmed shape fallback must be removed", "phase": "09"},
-    {"decision": "screwAttackL (section 1C, sy=3505) for ALL airborne states (both first and second jump)", "rationale": "1C has the space jump energy vortex visual (user wanted 'space jump not basic spin') AND spins forward. Section 1A was basic morph ball spin; 1B spins left.", "phase": "09"},
-    {"decision": "sw=sh=77 (contentSize-4) globally", "rationale": "Blue section separator sits at row 94 within the runRight cell (not row 95 as in spin sections). Need 77 to stay clear of row 278. May need 76 — still TBD.", "phase": "09"},
-    {"decision": "Frame counter advances on ground too; resets on takeoff not landing", "rationale": "Running animation needs to cycle; jump should start fresh. prevIsAirborne tracks ground→air transition.", "phase": "09"}
+    {"decision": "Replaced norfair_upper.png + norfair_lower.png with procedural cave draw", "rationale": "Both PNG files are Metroid Norfair tileset sprite atlases — not seamless background tiles. Tiling them produced the 'mashed together' look. Procedural draw (strata bands, lava, stalactites) is clean and correct.", "phase": "ad-hoc"},
+    {"decision": "samusHeight changed from 60 to 44 in COLLISION constants", "rationale": "Pixel-inspected sprite sheet: actual head-to-feet height is 44 source pixels (rows 0-43). Old value of 60 made hitbox extend 16px above the sprite head.", "phase": "ad-hoc"},
+    {"decision": "sh reduced from 70 to 56, dy anchored to foot row 42", "rationale": "Source rows 56-57 (y=258-259) are solid-black cell border pixels that were being drawn. Rows 44-55 are transparent. Row 42 is the last meaningful foot content. sh=56 cuts just before the border.", "phase": "ad-hoc"},
+    {"decision": "sx shifted from contentOffset (17) to contentOffset+1 (18), sw reduced from 76 to 75", "rationale": "Pixel inspection confirmed x=17 is a black cell border pixel. Shifting +1 preserves the right edge at x=93.", "phase": "ad-hoc"}
   ],
   "uncommitted_files": [],
-  "next_action": "Fix the 3 remaining Phase 9 bugs (tasks 6, 7, 8) then proceed to Phase 10. Start with task 6 (sh=76 change in drawSamus.ts) — it's a one-liner. Task 7 (static screen sprite) requires passing sprites to the else-branch drawScene call. Task 8 (skip frame 0) is a one-line change to the frame reset value.",
-  "context_notes": "Phase 9 has 3 open bugs found during iOS user testing this session. All are small fixes (<5 lines each). v0.1.13 is current production. Key files: components/samus-run/canvas/drawSamus.ts (sh value), components/samus-run/SamusRunGame.tsx (static screen draw + frame reset). Phase 10 is completely untouched — no CONTEXT.md, no PLAN.md, no plans."
+  "next_action": "Fix task 7: revert idle screen from animated RAF loop to static render (frame 0, ResizeObserver). Then fix the Playwright test to assert idle=static and in-game-ground=running.",
+  "context_notes": "Session was bug fixes outside any formal GSD phase. All fixes committed (v0.1.16 fixes, v0.1.17 tests). One known regression shipped: idle screen animation was added but user wants static idle. The Playwright test for animation passes but tests the wrong thing (idle screen anim instead of in-game ground anim). Key file: components/samus-run/SamusRunGame.tsx Effect A (lines ~130-150)."
 }
