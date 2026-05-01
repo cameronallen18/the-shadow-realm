@@ -121,9 +121,9 @@ test.describe("samus-run", () => {
     expect(diff).toBeLessThan(30);
   });
 
-  test("running animation advances frames (Samus not static on idle)", async ({ page }) => {
-    // Take two screenshots 300ms apart and compare the Samus region.
-    // If animation is running, pixel data should differ between frames.
+  test("Samus is static on idle screen (no frame animation)", async ({ page }) => {
+    // Idle screen must show a static standing pose — no RAF loop cycling frames.
+    // Two screenshots 600ms apart should have near-identical pixels in Samus region.
     const region = { x: 230, y: 550, width: 80, height: 65 };
     const snap1 = await page.screenshot({ type: "png" });
     await page.waitForTimeout(600);
@@ -139,7 +139,7 @@ test.describe("samus-run", () => {
     for (let i = 0; i < p1.length; i++) {
       if (Math.abs(p1[i] - p2[i]) > 5) diffCount++;
     }
-    // At 10fps, 600ms should produce ~6 frame advances → visible pixel changes
-    expect(diffCount).toBeGreaterThan(20);
+    // Static render — no frame changes expected between snapshots
+    expect(diffCount).toBeLessThan(10);
   });
 });
