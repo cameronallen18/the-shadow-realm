@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useReducer, useRef, useEffect, useCallback, useState } from "react";
 import { setupCanvas } from "./canvas/setupCanvas";
 import { drawEnvironment } from "./canvas/drawEnvironment";
-import { drawSamusIdle, drawSamusJump, drawSamusSprite } from "./canvas/drawSamus";
+import { drawSamusSprite } from "./canvas/drawSamus";
 import { drawRockWall } from "./canvas/drawObstacleShape";
-import { PHYSICS, GAME, SPRITE_LAYOUT, BG_SCROLL_SPEED, TILE_WIDTH } from "./constants";
+import { PHYSICS, GAME, SPRITE_LAYOUT } from "./constants";
 import { GamePhysicsState, createInitialGameState, updateGame, triggerJump } from "./gameLoop";
 import { AudioManager, createAudioManager } from "./audioManager";
 
@@ -57,12 +57,11 @@ function drawScene(
   width: number,
   height: number,
   physics?: GamePhysicsState,
-  sprites?: { samus: HTMLImageElement | null; bg: HTMLImageElement | null },
+  samus?: HTMLImageElement | null,
   animState?: { frame: number; accumulator: number; isScrewAttack: boolean },
-  bgScrollOffset?: number
 ): void {
   ctx.clearRect(0, 0, width, height);
-  drawEnvironment(ctx, width, height, sprites?.bg, bgScrollOffset ?? 0);
+  drawEnvironment(ctx, width, height);
 
   if (physics && screen === "playing") {
     // Dynamic obstacle positions from physics state
@@ -72,23 +71,17 @@ function drawScene(
     // Samus at physics-driven position
     const samusX = width * GAME.samusXRatio;
     const isAirborne = physics.samusY < height * GAME.floorRatio - 1;
-    if (sprites?.samus) {
-      drawSamusSprite(ctx, sprites.samus, samusX, physics.samusY, GAME.samusScale, animState, isAirborne);
-    } else if (isAirborne) {
-      drawSamusJump(ctx, samusX, physics.samusY, GAME.samusScale);
-    } else {
-      drawSamusIdle(ctx, samusX, physics.samusY, GAME.samusScale);
+    if (samus) {
+      drawSamusSprite(ctx, samus, samusX, physics.samusY, GAME.samusScale, animState, isAirborne);
     }
   } else {
-    // Static idle/gameover scene
+    // Static idle/gameover scene — obstacle preview + Samus running in place
     const obstacleX = width * GAME.obstacleXRatio;
     drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
     const samusX = width * GAME.samusXRatio;
     const samusY = height * GAME.floorRatio;
-    if (sprites?.samus) {
-      drawSamusSprite(ctx, sprites.samus, samusX, samusY, GAME.samusScale, undefined, false);
-    } else {
-      drawSamusIdle(ctx, samusX, samusY, GAME.samusScale);
+    if (samus) {
+      drawSamusSprite(ctx, samus, samusX, samusY, GAME.samusScale, animState, false);
     }
   }
 }
@@ -114,15 +107,10 @@ export default function SamusRunGame() {
   const scoreDisplayRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<AudioManager | null>(null);
 
-  // spritesRef — loaded once on mount by Effect D.
-  // samus.png is pre-converted RGBA (background stripped at build time via sharp).
-  // Both start null; Phase 9 draw calls must gate on samus !== null.
-  const spritesRef = useRef<{
-    samus: HTMLImageElement | null;
-    bg: HTMLImageElement | null;
-  }>({ samus: null, bg: null });
+  // spritesRef — samus.png loaded once on mount by Effect D.
+  const spritesRef = useRef<HTMLImageElement | null>(null);
 
-  // Triggers Effect A re-render once sprites finish loading on the idle screen.
+  // Triggers Effect A re-render once sprite finishes loading on the idle screen.
   const [spritesLoaded, setSpritesLoaded] = useState(false);
 
   // Screen-ref mirror — keeps screenRef in sync without stale closure issues
@@ -130,31 +118,43 @@ export default function SamusRunGame() {
     screenRef.current = state.screen;
   }, [state.screen]);
 
-  // Effect A: Static render + ResizeObserver (idle and gameover states)
+  // Effect A: rAF loop for idle and gameover states — animates Samus running in place
   useEffect(() => {
-    if (state.screen === "playing") return; // rAF loop handles rendering during play
+    if (state.screen === "playing") return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    function render() {
+    let rafId: number;
+    let lastTs: number | null = null;
+    const FRAME_DURATION = 1 / 10; // 10fps — matches gameplay run rate
+    const animState = { frame: 0, accumulator: 0, isScrewAttack: false };
+
+    function loop(ts: number) {
       const cvs = canvasRef.current;
       if (!cvs) return;
+
+      const dt = lastTs === null ? 0 : Math.min((ts - lastTs) / 1000, PHYSICS.dtCap);
+      lastTs = ts;
+
+      animState.accumulator += dt;
+      if (animState.accumulator >= FRAME_DURATION) {
+        animState.accumulator -= FRAME_DURATION;
+        animState.frame = (animState.frame + 1) % SPRITE_LAYOUT.runRight.frames;
+      }
+
       const ctx = setupCanvas(cvs);
       if (!ctx) return;
       const rect = cvs.getBoundingClientRect();
       canvasWidthRef.current = rect.width;
       canvasHeightRef.current = rect.height;
-      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, undefined);
+      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, animState);
+
+      rafId = requestAnimationFrame(loop);
     }
 
-    render();
-
-    const parent = canvas.parentElement;
-    if (!parent) return;
-    const observer = new ResizeObserver(() => render());
-    observer.observe(parent);
-    return () => observer.disconnect();
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
   }, [state.screen, spritesLoaded]);
 
   // Effect B: rAF game loop (playing state only)
@@ -186,12 +186,6 @@ export default function SamusRunGame() {
       isScrewAttack: false,
     };
     let prevIsAirborne = false;
-
-    // bgScrollOffset lives in Effect B closure per D-06 — auto-resets to 0 on
-    // game restart because Effect B re-runs when state.screen → "playing".
-    // Modulo TILE_WIDTH each frame keeps the value bounded to [0, 512) and
-    // avoids floating-point growth over long sessions.
-    let bgScrollOffset = 0;
 
     const SPIN_FPS = 10;
     const FRAME_DURATION = 1 / SPIN_FPS; // 0.1s per frame
@@ -241,17 +235,13 @@ export default function SamusRunGame() {
       }
       prevIsAirborne = isAirborne;
 
-      // Advance frames always — running on ground, spinning in air
+      // Advance frames — running on ground, spinning in air
       animState.accumulator += dt;
       if (animState.accumulator >= FRAME_DURATION) {
-        animState.accumulator -= FRAME_DURATION; // subtract, not reset — preserves leftover for 120Hz accuracy
+        animState.accumulator -= FRAME_DURATION;
         const section = isAirborne ? SPRITE_LAYOUT.screwAttackL : SPRITE_LAYOUT.runRight;
         animState.frame = (animState.frame + 1) % section.frames;
       }
-
-      // Advance background scroll offset (independent of speedMultiplier per D-05).
-      // Modulo TILE_WIDTH bounds the value to [0, 512) — prevents float growth.
-      bgScrollOffset = (bgScrollOffset + BG_SCROLL_SPEED * dt) % TILE_WIDTH;
 
       // WR-03 fix: check game over BEFORE drawing the final frame
       if (game.gameOver) {
@@ -267,7 +257,7 @@ export default function SamusRunGame() {
           const r = cvs.getBoundingClientRect();
           canvasWidthRef.current = r.width;
           canvasHeightRef.current = r.height;
-          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState, bgScrollOffset);
+          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState);
         }
       }
 
@@ -333,44 +323,39 @@ export default function SamusRunGame() {
     };
   }, [handleInput]);
 
-  // Effect D: Load sprite PNGs once on mount.
-  // samus.png is pre-converted RGBA (background stripped via sharp at build time).
-  // Both are same-origin assets in public/sprites/ — no CORS issue.
+  // Effect D: Load samus.png sprite once on mount.
+  // Pre-converted RGBA (background stripped at build time via sharp).
+  // Same-origin asset in public/sprites/ — no CORS issue.
   useEffect(() => {
     function loadImage(src: string): Promise<HTMLImageElement> {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = () => reject(new Error(`Failed to load sprite: ${src}`));
-        img.src = src + "?v=3";
+        img.src = src + "?v=4";
       });
     }
 
     let cancelled = false;
 
-    Promise.all([
-      loadImage("/sprites/samus.png"),
-      loadImage("/sprites/norfair_upper.png"),
-    ])
-      .then(([samusImg, bgImg]) => {
+    loadImage("/sprites/samus.png")
+      .then((samusImg) => {
         if (cancelled) return;
-        spritesRef.current.samus = samusImg;
-        spritesRef.current.bg = bgImg;
+        spritesRef.current = samusImg;
         setSpritesLoaded(true);
       })
       .catch((err) => {
-        // Non-fatal: shape fallback Samus continues to render.
         console.warn("[Effect D] Sprite load failed:", err);
       });
 
     return () => {
       cancelled = true;
     };
-  }, []); // Empty deps = mount-only. Sprites are global assets, load once per session.
+  }, []);
 
   return (
     <div className="relative w-full h-dvh bg-black overflow-hidden">
-      {/* DPR-aware canvas background (replaces Phase 4 placeholder div) */}
+      {/* DPR-aware canvas background */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full"

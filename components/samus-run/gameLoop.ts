@@ -94,10 +94,9 @@ export function updateGame(
     state.samusVY = 0;
   }
 
-  // e. Ceiling clamp — keep top of sprite in frame (samusY is sprite center)
-  const spriteHalfH = COLLISION.samusHeight / 2;
-  if (state.samusY <= spriteHalfH) {
-    state.samusY = spriteHalfH;
+  // e. Ceiling clamp — keep sprite in frame (samusY is feet/bottom, sprite height ~70px)
+  if (state.samusY <= COLLISION.samusHeight) {
+    state.samusY = COLLISION.samusHeight;
     state.samusVY = 0;
   }
 
@@ -109,10 +108,10 @@ export function updateGame(
     const offsetX = (COLLISION.samusWidth - hw) / 2;
     const offsetY = (COLLISION.samusHeight - hh) / 2;
 
-    // Samus hitbox (reduced, centered)
+    // Samus hitbox (reduced, bottom-anchored: samusY is feet/floor level)
     const sLeft = samusX - COLLISION.samusWidth / 2 + offsetX;
     const sRight = sLeft + hw;
-    const sTop = state.samusY - COLLISION.samusHeight / 2 + offsetY;
+    const sTop = state.samusY - COLLISION.samusHeight + offsetY;
     const sBottom = sTop + hh;
 
     for (const obs of state.obstacles) {
