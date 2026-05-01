@@ -118,43 +118,31 @@ export default function SamusRunGame() {
     screenRef.current = state.screen;
   }, [state.screen]);
 
-  // Effect A: rAF loop for idle and gameover states — animates Samus running in place
+  // Effect A: static render for idle and gameover states — Samus stands still
   useEffect(() => {
     if (state.screen === "playing") return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let rafId: number;
-    let lastTs: number | null = null;
-    const FRAME_DURATION = 1 / 10; // 10fps — matches gameplay run rate
-    const animState = { frame: 0, accumulator: 0, isScrewAttack: false };
+    const staticAnimState = { frame: 0, accumulator: 0, isScrewAttack: false };
 
-    function loop(ts: number) {
+    function render() {
       const cvs = canvasRef.current;
       if (!cvs) return;
-
-      const dt = lastTs === null ? 0 : Math.min((ts - lastTs) / 1000, PHYSICS.dtCap);
-      lastTs = ts;
-
-      animState.accumulator += dt;
-      if (animState.accumulator >= FRAME_DURATION) {
-        animState.accumulator -= FRAME_DURATION;
-        animState.frame = (animState.frame + 1) % SPRITE_LAYOUT.runRight.frames;
-      }
-
       const ctx = setupCanvas(cvs);
       if (!ctx) return;
       const rect = cvs.getBoundingClientRect();
       canvasWidthRef.current = rect.width;
       canvasHeightRef.current = rect.height;
-      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, animState);
-
-      rafId = requestAnimationFrame(loop);
+      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, staticAnimState);
     }
 
-    rafId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId);
+    render();
+
+    const ro = new ResizeObserver(render);
+    ro.observe(canvas);
+    return () => ro.disconnect();
   }, [state.screen, spritesLoaded]);
 
   // Effect B: rAF game loop (playing state only)
