@@ -58,7 +58,7 @@ function drawScene(
   height: number,
   physics?: GamePhysicsState,
   samus?: HTMLImageElement | null,
-  animState?: { frame: number; accumulator: number; isScrewAttack: boolean },
+  animState?: { frame: number; accumulator: number; isScrewAttack: boolean; useLateJump?: boolean },
 ): void {
   ctx.clearRect(0, 0, width, height);
   drawEnvironment(ctx, width, height);
@@ -172,6 +172,7 @@ export default function SamusRunGame() {
       frame: 0,
       accumulator: 0,
       isScrewAttack: false,
+      useLateJump: false,
     };
     let prevIsAirborne = false;
 
@@ -192,6 +193,9 @@ export default function SamusRunGame() {
       if (scoreDisplayRef.current) {
         scoreDisplayRef.current.textContent = String(game.obstaclesCleared);
       }
+
+      // Switch to late-game jump animation once 15 gaps cleared
+      animState.useLateJump = game.obstaclesCleared >= 15;
 
       // Score sound — fires when obstaclesCleared increments
       if (game.obstaclesCleared > lastScore) {
@@ -227,7 +231,8 @@ export default function SamusRunGame() {
       animState.accumulator += dt;
       if (animState.accumulator >= FRAME_DURATION) {
         animState.accumulator -= FRAME_DURATION;
-        const section = isAirborne ? SPRITE_LAYOUT.screwAttackL : SPRITE_LAYOUT.runRight;
+        const airborneSection = animState.useLateJump ? SPRITE_LAYOUT.screwAttackL : SPRITE_LAYOUT.spinJump;
+        const section = isAirborne ? airborneSection : SPRITE_LAYOUT.runRight;
         animState.frame = (animState.frame + 1) % section.frames;
       }
 
