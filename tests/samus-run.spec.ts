@@ -147,9 +147,10 @@ test.describe("samus-run", () => {
     await page.keyboard.press("Space"); // start game — pendingJump fires, Samus jumps
 
     // Jump arc ~0.87s. Wait 1.8s to ensure she has landed back on the ground.
-    await page.waitForTimeout(2200);
+    await page.waitForTimeout(1400);
 
     // Samus is on the ground running. No further input — she won't jump again.
+    // Safe window: landing at ~870ms, first obstacle arrives at ~2600ms.
     const region = { x: 200, y: 540, width: 100, height: 80 };
     const snap1 = await page.screenshot({ type: "png" });
     await page.waitForTimeout(500); // ~5 frame advances at 10fps
