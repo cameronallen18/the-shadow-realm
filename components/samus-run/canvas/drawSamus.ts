@@ -4,6 +4,7 @@ interface AnimState {
   frame: number;
   accumulator: number;
   isScrewAttack: boolean;
+  useLateJump?: boolean; // true once obstaclesCleared >= 15 — switches airborne anim to screwAttackL
 }
 
 const DEBUG_HITBOX = false;
@@ -23,9 +24,9 @@ export function drawSamusSprite(
   isAirborne: boolean,
   isIdle = false
 ): void {
-  const { cellSize, contentSize, contentOffset, idle, runRight, screwAttackL } = SPRITE_LAYOUT;
+  const { cellSize, contentSize, contentOffset, idle, runRight, spinJump, screwAttackL } = SPRITE_LAYOUT;
 
-  const section = isIdle ? idle : isAirborne ? screwAttackL : runRight;
+  const section = isIdle ? idle : isAirborne ? (animState?.useLateJump ? screwAttackL : spinJump) : runRight;
   const frameIndex = (animState?.frame ?? 0) % section.frames;
 
   // sx: +1 skips the 1px black cell-border pixel at x=contentOffset (confirmed via pixel inspection).

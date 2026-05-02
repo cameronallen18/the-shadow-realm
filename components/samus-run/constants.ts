@@ -24,7 +24,7 @@ export const GAME = {
   floorRatio: 0.85,        // floor Y = height * 0.85
   samusXRatio: 0.2,        // samus X = width * 0.2
   obstacleXRatio: 0.65,    // static obstacle X = width * 0.65
-  obstacleWidth: 40,       // rock wall column width in CSS pixels
+  obstacleWidth: 30,       // rock wall column width in CSS pixels (reduced from 40 for narrower pillars)
   samusScale: 1,           // sprite scale multiplier
 } as const;
 
@@ -61,6 +61,7 @@ export const SPRITE_LAYOUT = {
 
   // Section row Y-origins in the sprite sheet (absolute px from top of PNG)
   idle:         { sy: 49,   frames: 1, footRow: 54 },          // section 00 — standing idle (1 frame)
-  runRight:     { sy: 1152, frames: 6, sh: 100, footRow: 99 }, // section 09 — moving right, not aiming (6 frames)
-  screwAttackL: { sy: 3505, frames: 9 },                      // section 1C — space jump energy vortex, spins forward
+  runRight:     { sy: 1200, frames: 6, sh: 53, footRow: 51 },  // section 09 — moving right, not aiming (6 frames); sy fixed from 1152 (was inside label bar at y=1168-1187)
+  spinJump:     { sy: 3248, frames: 9, sh: 46, footRow: 44 },  // section 19 — facing right spin jump (pixel-verified); used for early-game airborne (< 15 gaps cleared)
+  screwAttackL: { sy: 3505, frames: 9 },                      // section 1C — space jump energy vortex, spins forward; used for late-game airborne (>= 15 gaps cleared)
 } as const;

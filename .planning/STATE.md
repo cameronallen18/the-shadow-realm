@@ -116,11 +116,12 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260501-ayo | Fix idle animation regression in SamusRunGame.tsx | 2026-05-01 | 27e424c | [260501-ayo-fix-idle-animation-regression-in-samusru](./quick/260501-ayo-fix-idle-animation-regression-in-samusru/) |
+| 260502-4ha | Fix samus-run: runRight bleed, spinJump, pillar width, gap curve, useLateJump | 2026-05-02 | 9a36566 | [260502-4ha-fix-samus-run-game-5-changes-all-verifie](./quick/260502-4ha-fix-samus-run-game-5-changes-all-verifie/) |
 
 ## Session Continuity
 
-Last session: 2026-05-01
-Stopped at: Completed quick task 260501-ayo — idle animation regression fixed
+Last session: 2026-05-02
+Stopped at: Completed quick task 260502-4ha — 5 samus-run fixes applied and verified
 Resume file: None
 
 **Planned Phase:** 10 (Background Scroll) — 1 plans — 2026-04-28T02:32:49.073Z
