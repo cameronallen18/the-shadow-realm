@@ -14,6 +14,7 @@ export interface GamePhysicsState {
   samusVY: number;          // CSS px/s, positive = downward
   obstacles: Obstacle[];
   obstaclesCleared: number;
+  obstaclesSpawned: number; // total obstacles created (including initial 2); used for difficulty curve
   speedMultiplier: number;
   gameOver: boolean;
   pendingJump: boolean;     // set true on first input; consumed by first loop frame
@@ -22,14 +23,28 @@ export interface GamePhysicsState {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function randomGap(canvasHeight: number): { gapTop: number; gapBottom: number } {
+/**
+ * Difficulty curve for gap size based on obstacle number n (1-indexed).
+ * n <= 5:    always max gap (easiest — player is learning controls)
+ * 6 <= n <= 15: half-range random (medium — ramps up)
+ * n > 15:   full-range random (current behavior — max challenge)
+ */
+function gapForObstacle(n: number, canvasHeight: number): { gapTop: number; gapBottom: number } {
   const playAreaTop = canvasHeight * 0.1;
   const playAreaBottom = canvasHeight * GAME.floorRatio;
   const playHeight = playAreaBottom - playAreaTop;
 
   const minGap = playHeight * 0.28;
   const maxGap = playHeight * 0.45;
-  const gapSize = minGap + Math.random() * (maxGap - minGap);
+
+  let gapSize: number;
+  if (n <= 5) {
+    gapSize = maxGap;
+  } else if (n <= 15) {
+    gapSize = minGap + Math.random() * (maxGap - minGap) / 2;
+  } else {
+    gapSize = minGap + Math.random() * (maxGap - minGap);
+  }
 
   const minCenter = playAreaTop + gapSize / 2;
   const maxCenter = playAreaBottom - gapSize / 2;
@@ -50,16 +65,17 @@ export function createInitialGameState(
     obstacles: [
       {
         x: canvasWidth + 100,
-        ...randomGap(canvasHeight),
+        ...gapForObstacle(1, canvasHeight),
         scored: false,
       },
       {
         x: canvasWidth + 100 + OBSTACLE_SPACING_PX,
-        ...randomGap(canvasHeight),
+        ...gapForObstacle(2, canvasHeight),
         scored: false,
       },
     ],
     obstaclesCleared: 0,
+    obstaclesSpawned: 2,
     speedMultiplier: 1,
     gameOver: false,
     pendingJump: false,
@@ -153,7 +169,8 @@ export function updateGame(
       const otherObs = state.obstacles.find((o) => o !== obs);
       const leadX = otherObs ? otherObs.x : canvasWidth;
       obs.x = leadX + OBSTACLE_SPACING_PX;
-      const gap = randomGap(canvasHeight);
+      state.obstaclesSpawned++;
+      const gap = gapForObstacle(state.obstaclesSpawned, canvasHeight);
       obs.gapTop = gap.gapTop;
       obs.gapBottom = gap.gapBottom;
       obs.scored = false;
