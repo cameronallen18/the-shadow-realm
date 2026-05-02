@@ -1,44 +1,44 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-01T14:48:48.853Z",
-  "phase": null,
+  "timestamp": "2026-05-01T19:00:00.000Z",
   "phase_name": "ad-hoc bug fixes (samus-run)",
-  "phase_dir": null,
-  "plan": null,
-  "task": null,
-  "total_tasks": null,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Fix background: replace norfair_upper.png tileset atlas with procedural cave draw", "status": "done", "commit": "f9688c8"},
-    {"id": 2, "name": "Fix hitbox: bottom-anchor collision (samusY = feet, not center)", "status": "done", "commit": "f9688c8"},
-    {"id": 3, "name": "Fix sprite left border line: sx +1 to skip black cell border pixel", "status": "done", "commit": "f9688c8"},
-    {"id": 4, "name": "Fix sprite bottom border line: reduce sh from 70 to 56, anchor dy to foot row 42", "status": "done", "commit": "f9688c8"},
-    {"id": 5, "name": "Remove block figure: delete drawSamusIdle + drawSamusJump", "status": "done", "commit": "f9688c8"},
-    {"id": 6, "name": "Add Playwright tests (7 tests, all passing)", "status": "done", "commit": "9e97432"}
+    { "id": 1, "name": "Fix idle animation regression (Effect A static)", "status": "done", "commit": "3fe0879" },
+    { "id": 2, "name": "Fix Playwright idle-static test", "status": "done", "commit": "27e424c" }
   ],
   "remaining_tasks": [
     {
-      "id": 7,
-      "name": "Fix running animation behavior: idle=static, gameplay-ground=running",
+      "id": 3,
+      "name": "Regenerate debug-sprite.html with larger frames for user to confirm direction",
       "status": "open",
-      "detail": "WRONG behavior shipped: idle screen now has RAF loop animating Samus running in place (SamusRunGame.tsx Effect A). User wants STATIC standing pose on idle/gameover screens, and running animation ONLY when Samus is on the ground during active gameplay. In-game ground animation code is correct (Effect B uses runRight when !isAirborne) but Samus immediately jumps at game start (pendingJump=true) so the running animation is barely visible. Fix: (1) Revert Effect A back to single-render + ResizeObserver (static frame 0, no RAF loop). (2) Verify in-game ground running is visible during brief landing moments. (3) Fix the Playwright test — it currently passes by testing idle-screen animation which is the wrong behavior."
+      "detail": "User could not read the previous debug-sprite.html. Regenerate with: full 96px cell height (left=i*96, top=sy, width=96, height=96), 192px display size, all 10 frames, label CANDIDATE running RIGHT? (sy=1536) on top and CONFIRMED running LEFT (sy=1344) below. Node script is in the plan file at /home/cameron/.claude/plans/the-run-animation-still-enchanted-ember.md Step 1."
+    },
+    {
+      "id": 4,
+      "name": "Fix runRight sprite coordinates in constants.ts",
+      "status": "open",
+      "detail": "SPRITE_LAYOUT.runRight.sy = 185 is WRONG — points to empty/transparent region. Confirmed via raw pixel scan. Correct value is sy=1536 (10 frames) pending user visual confirmation. Update: runRight: { sy: 1536, frames: 10 }. Fallbacks if wrong direction: sy=1440 or sy=1632."
+    },
+    {
+      "id": 5,
+      "name": "Add Playwright test for ground running during gameplay",
+      "status": "open",
+      "detail": "Add test 8 to tests/samus-run.spec.ts: start game with Space, wait 1800ms for landing, take 2 screenshots 500ms apart of region {x:200,y:540,w:100,h:80}, assert diffCount > 20."
+    },
+    {
+      "id": 6,
+      "name": "Run all 8 Playwright tests, commit, and push",
+      "status": "open",
+      "detail": "npx playwright test tests/samus-run.spec.ts --reporter=line, then git push origin main. Delete public/debug-sprite.html before committing."
     }
   ],
   "blockers": [],
-  "human_actions_pending": [
-    {
-      "action": "Verify fixes on production (Vercel deploy of v0.1.17)",
-      "context": "Pushed to main, Vercel auto-deploys. Check background, hitbox, sprite borders, idle static pose.",
-      "blocking": false
-    }
-  ],
   "decisions": [
-    {"decision": "Replaced norfair_upper.png + norfair_lower.png with procedural cave draw", "rationale": "Both PNG files are Metroid Norfair tileset sprite atlases — not seamless background tiles. Tiling them produced the 'mashed together' look. Procedural draw (strata bands, lava, stalactites) is clean and correct.", "phase": "ad-hoc"},
-    {"decision": "samusHeight changed from 60 to 44 in COLLISION constants", "rationale": "Pixel-inspected sprite sheet: actual head-to-feet height is 44 source pixels (rows 0-43). Old value of 60 made hitbox extend 16px above the sprite head.", "phase": "ad-hoc"},
-    {"decision": "sh reduced from 70 to 56, dy anchored to foot row 42", "rationale": "Source rows 56-57 (y=258-259) are solid-black cell border pixels that were being drawn. Rows 44-55 are transparent. Row 42 is the last meaningful foot content. sh=56 cuts just before the border.", "phase": "ad-hoc"},
-    {"decision": "sx shifted from contentOffset (17) to contentOffset+1 (18), sw reduced from 76 to 75", "rationale": "Pixel inspection confirmed x=17 is a black cell border pixel. Shifting +1 preserves the right edge at x=93.", "phase": "ad-hoc"}
+    { "decision": "runRight.sy=185 is wrong — confirmed via sharp pixel stats (all 4 frames identical, near-zero alpha)", "rationale": "Sharp raw pixel scan showed all frames extract identical mostly-transparent pixels at sy=185+17=202", "phase": "ad-hoc" },
+    { "decision": "sy=1344 is running LEFT (user confirmed visually)", "rationale": "First subagent found this via opaque pixel scan; user verified in browser", "phase": "ad-hoc" },
+    { "decision": "sy=1536 is the candidate for running RIGHT (not yet user-confirmed)", "rationale": "Same maxOpaque as sy=1344 (~5380), likely mirror pair. Needs visual confirmation.", "phase": "ad-hoc" }
   ],
-  "uncommitted_files": [],
-  "next_action": "Fix task 7: revert idle screen from animated RAF loop to static render (frame 0, ResizeObserver). Then fix the Playwright test to assert idle=static and in-game-ground=running.",
-  "context_notes": "Session was bug fixes outside any formal GSD phase. All fixes committed (v0.1.16 fixes, v0.1.17 tests). One known regression shipped: idle screen animation was added but user wants static idle. The Playwright test for animation passes but tests the wrong thing (idle screen anim instead of in-game ground anim). Key file: components/samus-run/SamusRunGame.tsx Effect A (lines ~130-150)."
+  "context_notes": "Key file: components/samus-run/constants.ts — SPRITE_LAYOUT.runRight. The fix is a 1-line change to sy value. public/debug-sprite.html already exists but was too small/hard to read. Needs regeneration with full cell dimensions (no contentOffset clipping).",
+  "next_action": "Regenerate public/debug-sprite.html using node script in plan Step 1. User opens http://localhost:3000/debug-sprite.html and confirms sy=1536 faces right. Then fix constants.ts, add test, push."
 }
