@@ -20,23 +20,22 @@ export function drawSamusSprite(
   y: number,
   scale: number,
   animState: AnimState | undefined,
-  isAirborne: boolean
+  isAirborne: boolean,
+  isIdle = false
 ): void {
-  const { cellSize, contentSize, contentOffset, runRight, screwAttackL } = SPRITE_LAYOUT;
+  const { cellSize, contentSize, contentOffset, idle, runRight, screwAttackL } = SPRITE_LAYOUT;
 
-  const section = isAirborne ? screwAttackL : runRight;
+  const section = isIdle ? idle : isAirborne ? screwAttackL : runRight;
   const frameIndex = (animState?.frame ?? 0) % section.frames;
 
   // sx: +1 skips the 1px black cell-border pixel at x=contentOffset (confirmed via pixel inspection).
   // sw: -6 preserves right edge at (sx+sw=93) after the +1 shift.
-  // sh: 56 = contentSize-25 — cuts the 2-px solid-black bottom border (rows 56-57) and all
-  //     transparent rows between feet and border; rows 0-55 span head through feet.
-  // dy: anchored to feet row 42 within the source rect so Samus stands on the floor (y = samusY).
+  // sh/footRow: per-section overrides for sections whose sprites don't fit the default 56px window.
   const sx = Math.floor(frameIndex * cellSize + contentOffset + 1);
   const sy = Math.floor(section.sy + contentOffset);
   const sw = contentSize - 6;
-  const sh = contentSize - 25; // 56 — head(0) to just before black border(56)
-  const FOOT_ROW = 42;         // last meaningful foot content row (pixel-inspected)
+  const sh = (section as { sh?: number }).sh ?? (contentSize - 25);
+  const FOOT_ROW = (section as { footRow?: number }).footRow ?? 42;
 
   const dw = Math.floor(sw * scale);
   const dx = Math.floor(x - dw / 2);

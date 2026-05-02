@@ -81,7 +81,7 @@ function drawScene(
     const samusX = width * GAME.samusXRatio;
     const samusY = height * GAME.floorRatio;
     if (samus) {
-      drawSamusSprite(ctx, samus, samusX, samusY, GAME.samusScale, animState, false);
+      drawSamusSprite(ctx, samus, samusX, samusY, GAME.samusScale, animState, false, true);
     }
   }
 }

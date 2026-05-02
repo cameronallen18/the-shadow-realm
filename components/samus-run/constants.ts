@@ -60,6 +60,7 @@ export const SPRITE_LAYOUT = {
   contentOffset: 17,    // px — x and y offset from cell origin to sprite content
 
   // Section row Y-origins in the sprite sheet (absolute px from top of PNG)
-  runRight:     { sy: 185,  frames: 4 },  // section 01 — facing right, running (4 frames)
-  screwAttackL: { sy: 3505, frames: 9 },  // section 1C — space jump energy vortex, spins forward
+  idle:         { sy: 49,   frames: 1 },                      // section 00 — standing idle (1 frame)
+  runRight:     { sy: 1152, frames: 6, sh: 100, footRow: 99 }, // section 09 — moving right, not aiming (6 frames)
+  screwAttackL: { sy: 3505, frames: 9 },                      // section 1C — space jump energy vortex, spins forward
 } as const;

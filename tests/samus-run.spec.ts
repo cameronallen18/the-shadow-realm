@@ -142,4 +142,30 @@ test.describe("samus-run", () => {
     // Static render — no frame changes expected between snapshots
     expect(diffCount).toBeLessThan(10);
   });
+
+  test("Samus runs on ground during gameplay", async ({ page }) => {
+    await page.keyboard.press("Space"); // start game — pendingJump fires, Samus jumps
+
+    // Jump arc ~0.87s. Wait 1.8s to ensure she has landed back on the ground.
+    await page.waitForTimeout(2200);
+
+    // Samus is on the ground running. No further input — she won't jump again.
+    const region = { x: 200, y: 540, width: 100, height: 80 };
+    const snap1 = await page.screenshot({ type: "png" });
+    await page.waitForTimeout(500); // ~5 frame advances at 10fps
+    const snap2 = await page.screenshot({ type: "png" });
+
+    const sr = toSharpRegion(region);
+    const [p1, p2] = await Promise.all([
+      sharp(snap1).extract(sr).raw().toBuffer(),
+      sharp(snap2).extract(sr).raw().toBuffer(),
+    ]);
+
+    let diffCount = 0;
+    for (let i = 0; i < p1.length; i++) {
+      if (Math.abs(p1[i] - p2[i]) > 5) diffCount++;
+    }
+    // Running animation — visible frame changes expected between snapshots
+    expect(diffCount).toBeGreaterThan(20);
+  });
 });
