@@ -25,9 +25,9 @@ export interface GamePhysicsState {
 
 /**
  * Difficulty curve for gap size based on obstacle number n (1-indexed).
- * n <= 5:    always max gap (easiest — player is learning controls)
- * 6 <= n <= 15: half-range random (medium — ramps up)
- * n > 15:   full-range random (current behavior — max challenge)
+ * n <= 10:   always max gap (learning phase)
+ * 11-25:     upper 60% of range only (never near minimum)
+ * n > 25:    full range but sqrt-biased toward larger — hard gaps are rare
  */
 function gapForObstacle(n: number, canvasHeight: number): { gapTop: number; gapBottom: number } {
   const playAreaTop = canvasHeight * 0.1;
@@ -38,12 +38,12 @@ function gapForObstacle(n: number, canvasHeight: number): { gapTop: number; gapB
   const maxGap = playHeight * 0.45;
 
   let gapSize: number;
-  if (n <= 5) {
+  if (n <= 10) {
     gapSize = maxGap;
-  } else if (n <= 15) {
-    gapSize = minGap + Math.random() * (maxGap - minGap) / 2;
+  } else if (n <= 25) {
+    gapSize = minGap + (maxGap - minGap) * (0.4 + Math.random() * 0.6);
   } else {
-    gapSize = minGap + Math.random() * (maxGap - minGap);
+    gapSize = minGap + (maxGap - minGap) * Math.sqrt(Math.random());
   }
 
   const minCenter = playAreaTop + gapSize / 2;
