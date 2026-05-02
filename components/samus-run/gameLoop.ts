@@ -148,7 +148,7 @@ export function updateGame(
         obs.scored = true;
         state.obstaclesCleared++;
         // Speed progression check moved here (increments on actual gaps cleared)
-        if (state.obstaclesCleared > 0 && state.obstaclesCleared % 15 === 0) {
+        if (state.obstaclesCleared > 0 && state.obstaclesCleared % 10 === 5) {
           state.speedMultiplier = Math.min(
             state.speedMultiplier + PHYSICS.speedIncrement,
             PHYSICS.maxSpeedMultiplier
