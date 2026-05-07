@@ -351,7 +351,7 @@ export default function SamusRunGame() {
       loadImage("/sprites/samus.png?v=4"),
       loadImage("/sprites/norfair-bg-cave.png"),
       loadImage("/sprites/norfair-bg-temple.png"),
-      loadImage("/sprites/norfair-pillar-cave.png?v=5"),
+      loadImage("/sprites/norfair-pillar-cave.png?v=6"),
       loadImage("/sprites/norfair-pillar-temple.png?v=5"),
     ])
       .then(([samusImg, bgCave, bgTemple, pillarCave, pillarTemple]) => {
