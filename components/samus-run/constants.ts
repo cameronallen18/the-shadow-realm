@@ -1,3 +1,9 @@
+// Background scroll speed — slower than obstacles for parallax depth feel.
+export const BG_SCROLL_SPEED = 50; // CSS px/s
+
+// Theme rotation — switch every N obstacles cleared.
+export const THEME_SWITCH_EVERY = 10;
+
 // Norfair palette — dark reddish-browns as thematic exception inside canvas.
 // Page UI surrounding the game remains cool-toned per CLAUDE.md.
 export const NORFAIR = {

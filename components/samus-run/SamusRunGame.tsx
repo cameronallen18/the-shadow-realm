@@ -6,7 +6,7 @@ import { setupCanvas } from "./canvas/setupCanvas";
 import { drawEnvironment } from "./canvas/drawEnvironment";
 import { drawSamusSprite } from "./canvas/drawSamus";
 import { drawRockWall } from "./canvas/drawObstacleShape";
-import { PHYSICS, GAME, SPRITE_LAYOUT } from "./constants";
+import { PHYSICS, GAME, SPRITE_LAYOUT, BG_SCROLL_SPEED, THEME_SWITCH_EVERY } from "./constants";
 import { GamePhysicsState, createInitialGameState, updateGame, triggerJump } from "./gameLoop";
 import { AudioManager, createAudioManager } from "./audioManager";
 
@@ -59,25 +59,25 @@ function drawScene(
   physics?: GamePhysicsState,
   samus?: HTMLImageElement | null,
   animState?: { frame: number; accumulator: number; isScrewAttack: boolean; useLateJump?: boolean },
+  bg?: HTMLImageElement | null,
+  bgOffset?: number,
+  pillarImg?: HTMLImageElement | null,
 ): void {
   ctx.clearRect(0, 0, width, height);
-  drawEnvironment(ctx, width, height);
+  drawEnvironment(ctx, width, height, bg, bgOffset);
 
   if (physics && screen === "playing") {
-    // Dynamic obstacle positions from physics state
     for (const obs of physics.obstacles) {
-      drawRockWall(ctx, obs.x, obs.gapTop, obs.gapBottom, GAME.obstacleWidth, height);
+      drawRockWall(ctx, obs.x, obs.gapTop, obs.gapBottom, GAME.obstacleWidth, height, pillarImg);
     }
-    // Samus at physics-driven position
     const samusX = width * GAME.samusXRatio;
     const isAirborne = physics.samusY < height * GAME.floorRatio - 1;
     if (samus) {
       drawSamusSprite(ctx, samus, samusX, physics.samusY, GAME.samusScale, animState, isAirborne);
     }
   } else {
-    // Static idle/gameover scene — obstacle preview + Samus running in place
     const obstacleX = width * GAME.obstacleXRatio;
-    drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height);
+    drawRockWall(ctx, obstacleX, height * 0.15, height * 0.6, GAME.obstacleWidth, height, pillarImg);
     const samusX = width * GAME.samusXRatio;
     const samusY = height * GAME.floorRatio;
     if (samus) {
@@ -110,6 +110,15 @@ export default function SamusRunGame() {
   // spritesRef — samus.png loaded once on mount by Effect D.
   const spritesRef = useRef<HTMLImageElement | null>(null);
 
+  // Background + pillar images for 2-theme rotation. Loaded in Effect D.
+  const bgCaveRef    = useRef<HTMLImageElement | null>(null);
+  const bgTempleRef  = useRef<HTMLImageElement | null>(null);
+  const pillarCaveRef   = useRef<HTMLImageElement | null>(null);
+  const pillarTempleRef = useRef<HTMLImageElement | null>(null);
+
+  // Parallax scroll position — accumulated in the game loop, wraps per drawBackground.
+  const bgScrollOffsetRef = useRef(0);
+
   // Triggers Effect A re-render once sprite finishes loading on the idle screen.
   const [spritesLoaded, setSpritesLoaded] = useState(false);
 
@@ -135,7 +144,7 @@ export default function SamusRunGame() {
       const rect = cvs.getBoundingClientRect();
       canvasWidthRef.current = rect.width;
       canvasHeightRef.current = rect.height;
-      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, staticAnimState);
+      drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, staticAnimState, bgCaveRef.current, 0, pillarCaveRef.current);
     }
 
     render();
@@ -157,6 +166,7 @@ export default function SamusRunGame() {
     canvasWidthRef.current = rect.width;
     canvasHeightRef.current = rect.height;
     gameRef.current = createInitialGameState(rect.width, rect.height);
+    bgScrollOffsetRef.current = 0;
 
     // If the first input flagged a pending jump, apply it
     if (gameRef.current) {
@@ -187,6 +197,14 @@ export default function SamusRunGame() {
       lastTs = ts;
 
       updateGame(game, dt, canvasWidthRef.current, canvasHeightRef.current);
+
+      // Advance parallax scroll
+      bgScrollOffsetRef.current += BG_SCROLL_SPEED * dt;
+
+      // Theme: 0 = cave (wave-beam-room), 1 = temple (hall-before-ridley), rotates every N obstacles
+      const themeIndex = Math.floor(game.obstaclesCleared / THEME_SWITCH_EVERY) % 2;
+      const bgImg     = themeIndex === 0 ? bgCaveRef.current    : bgTempleRef.current;
+      const pillarImg = themeIndex === 0 ? pillarCaveRef.current : pillarTempleRef.current;
 
       // Sync live score ref and DOM display (avoids React re-render per frame)
       scoreRef.current = game.obstaclesCleared;
@@ -250,7 +268,7 @@ export default function SamusRunGame() {
           const r = cvs.getBoundingClientRect();
           canvasWidthRef.current = r.width;
           canvasHeightRef.current = r.height;
-          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState);
+          drawScene(ctx, "playing", r.width, r.height, game, spritesRef.current, animState, bgImg, bgScrollOffsetRef.current, pillarImg);
         }
       }
 
@@ -316,29 +334,39 @@ export default function SamusRunGame() {
     };
   }, [handleInput]);
 
-  // Effect D: Load samus.png sprite once on mount.
-  // Pre-converted RGBA (background stripped at build time via sharp).
-  // Same-origin asset in public/sprites/ — no CORS issue.
+  // Effect D: Load samus.png + all background/pillar images once on mount.
   useEffect(() => {
     function loadImage(src: string): Promise<HTMLImageElement> {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = () => reject(new Error(`Failed to load sprite: ${src}`));
-        img.src = src + "?v=4";
+        img.src = src;
       });
     }
 
     let cancelled = false;
 
-    loadImage("/sprites/samus.png")
-      .then((samusImg) => {
+    Promise.all([
+      loadImage("/sprites/samus.png?v=4"),
+      loadImage("/sprites/norfair-bg-cave.png"),
+      loadImage("/sprites/norfair-bg-temple.png"),
+      loadImage("/sprites/norfair-pillar-cave.png?v=5"),
+      loadImage("/sprites/norfair-pillar-temple.png?v=5"),
+    ])
+      .then(([samusImg, bgCave, bgTemple, pillarCave, pillarTemple]) => {
         if (cancelled) return;
-        spritesRef.current = samusImg;
+        spritesRef.current    = samusImg;
+        bgCaveRef.current     = bgCave;
+        bgTempleRef.current   = bgTemple;
+        pillarCaveRef.current = pillarCave;
+        pillarTempleRef.current = pillarTemple;
         setSpritesLoaded(true);
       })
       .catch((err) => {
-        console.warn("[Effect D] Sprite load failed:", err);
+        console.warn("[Effect D] Asset load failed:", err);
+        // Sprite-only fallback: game still runs without bg textures
+        setSpritesLoaded(true);
       });
 
     return () => {

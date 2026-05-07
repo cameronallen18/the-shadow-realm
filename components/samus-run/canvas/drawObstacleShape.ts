@@ -1,31 +1,52 @@
 import { NORFAIR } from "../constants";
 
-/**
- * Draws a rock wall obstacle pair (top column + bottom column with a gap between).
- * x = left edge of the column.
- * gapTop/gapBottom define the opening Samus flies through.
- */
+// Scales tile to fill destW (aspect-ratio preserved), then tiles vertically.
+function fillTiled(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement | null,
+  destX: number,
+  destY: number,
+  destW: number,
+  destH: number,
+): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(destX, destY, destW, destH);
+  ctx.clip();
+
+  if (img) {
+    ctx.imageSmoothingEnabled = false;
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
+    const scale = destW / iw;
+    const drawH = Math.ceil(ih * scale);
+    for (let ty = destY; ty < destY + destH; ty += drawH) {
+      ctx.drawImage(img, destX, ty, destW, drawH);
+    }
+  } else {
+    ctx.fillStyle = NORFAIR.rock;
+    ctx.fillRect(destX, destY, destW, destH);
+  }
+
+  ctx.restore();
+}
+
 export function drawRockWall(
   ctx: CanvasRenderingContext2D,
   x: number,
   gapTop: number,
   gapBottom: number,
   width: number,
-  canvasHeight: number
+  canvasHeight: number,
+  pillarImg?: HTMLImageElement | null,
 ): void {
-  // Top column (from ceiling down to gapTop)
-  ctx.fillStyle = NORFAIR.rock;
-  ctx.fillRect(x, 0, width, gapTop);
-
-  // Bottom edge highlight of top column
+  // Top column
+  fillTiled(ctx, pillarImg ?? null, x, 0, width, gapTop);
   ctx.fillStyle = NORFAIR.rockEdge;
   ctx.fillRect(x, gapTop - 4, width, 4);
 
-  // Bottom column (from gapBottom to floor)
-  ctx.fillStyle = NORFAIR.rock;
-  ctx.fillRect(x, gapBottom, width, canvasHeight - gapBottom);
-
-  // Top edge highlight of bottom column
+  // Bottom column
+  fillTiled(ctx, pillarImg ?? null, x, gapBottom, width, canvasHeight - gapBottom);
   ctx.fillStyle = NORFAIR.rockEdge;
   ctx.fillRect(x, gapBottom, width, 4);
 }
