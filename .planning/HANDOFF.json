@@ -1,44 +1,27 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-01T19:00:00.000Z",
-  "phase_name": "ad-hoc bug fixes (samus-run)",
+  "timestamp": "2026-05-07T02:42:20.532Z",
+  "phase": "quick",
+  "phase_name": "Norfair backgrounds + pillar textures",
   "status": "paused",
-  "completed_tasks": [
-    { "id": 1, "name": "Fix idle animation regression (Effect A static)", "status": "done", "commit": "3fe0879" },
-    { "id": 2, "name": "Fix Playwright idle-static test", "status": "done", "commit": "27e424c" }
+  "next_action": "Verify temple pillar (brick-tower.png, obstacles 10+) on deployed site — likely squashed like walls.png was. If so, extract a 16x16 tile using debug-norfair-bg.html and apply same way as cave pillar.",
+  "completed": [
+    "Two-theme rotation every 10 obstacles (cave=wave-beam-room, temple=hall-before-ridley)",
+    "Background: scale to fill canvas height, preserve aspect ratio, tile horizontally + parallax",
+    "Pillar tiling: scale-to-width, tile vertically (good for 16x16 tiles)",
+    "Cave pillar: norfair_lower.png x=96,y=0 (16x16) — committed 2e66eeb",
+    "Temple pillar: brick-tower.png — may need 16x16 tile extracted (same squash risk)"
   ],
-  "remaining_tasks": [
-    {
-      "id": 3,
-      "name": "Regenerate debug-sprite.html with larger frames for user to confirm direction",
-      "status": "open",
-      "detail": "User could not read the previous debug-sprite.html. Regenerate with: full 96px cell height (left=i*96, top=sy, width=96, height=96), 192px display size, all 10 frames, label CANDIDATE running RIGHT? (sy=1536) on top and CONFIRMED running LEFT (sy=1344) below. Node script is in the plan file at /home/cameron/.claude/plans/the-run-animation-still-enchanted-ember.md Step 1."
-    },
-    {
-      "id": 4,
-      "name": "Fix runRight sprite coordinates in constants.ts",
-      "status": "open",
-      "detail": "SPRITE_LAYOUT.runRight.sy = 185 is WRONG — points to empty/transparent region. Confirmed via raw pixel scan. Correct value is sy=1536 (10 frames) pending user visual confirmation. Update: runRight: { sy: 1536, frames: 10 }. Fallbacks if wrong direction: sy=1440 or sy=1632."
-    },
-    {
-      "id": 5,
-      "name": "Add Playwright test for ground running during gameplay",
-      "status": "open",
-      "detail": "Add test 8 to tests/samus-run.spec.ts: start game with Space, wait 1800ms for landing, take 2 screenshots 500ms apart of region {x:200,y:540,w:100,h:80}, assert diffCount > 20."
-    },
-    {
-      "id": 6,
-      "name": "Run all 8 Playwright tests, commit, and push",
-      "status": "open",
-      "detail": "npx playwright test tests/samus-run.spec.ts --reporter=line, then git push origin main. Delete public/debug-sprite.html before committing."
-    }
-  ],
-  "blockers": [],
-  "decisions": [
-    { "decision": "runRight.sy=185 is wrong — confirmed via sharp pixel stats (all 4 frames identical, near-zero alpha)", "rationale": "Sharp raw pixel scan showed all frames extract identical mostly-transparent pixels at sy=185+17=202", "phase": "ad-hoc" },
-    { "decision": "sy=1344 is running LEFT (user confirmed visually)", "rationale": "First subagent found this via opaque pixel scan; user verified in browser", "phase": "ad-hoc" },
-    { "decision": "sy=1536 is the candidate for running RIGHT (not yet user-confirmed)", "rationale": "Same maxOpaque as sy=1344 (~5380), likely mirror pair. Needs visual confirmation.", "phase": "ad-hoc" }
-  ],
-  "context_notes": "Key file: components/samus-run/constants.ts — SPRITE_LAYOUT.runRight. The fix is a 1-line change to sy value. public/debug-sprite.html already exists but was too small/hard to read. Needs regeneration with full cell dimensions (no contentOffset clipping).",
-  "next_action": "Regenerate public/debug-sprite.html using node script in plan Step 1. User opens http://localhost:3000/debug-sprite.html and confirms sy=1536 faces right. Then fix constants.ts, add test, push."
+  "key_decisions": {
+    "pillar_tiling": "Scale tile to pillar width, preserve aspect ratio, tile vertically. Only works correctly with small tiles (~16x16). Wide images (256px) get crushed to a flat color.",
+    "cave_pillar": "norfair_lower.png x=96,y=0 — 16x16 dark red tile",
+    "temple_pillar": "brick-tower.png currently — needs verification",
+    "bg_scaling": "Scale image to canvas height (aspect-ratio preserved), tile horizontally with parallax at 50px/s"
+  },
+  "files": {
+    "sprites": "public/sprites/norfair-bg-cave.png, norfair-bg-temple.png, norfair-pillar-cave.png, norfair-pillar-temple.png",
+    "source_pack": "public/sprites/norfair-bgs/ (all 14 Norfair backgrounds as PNG)",
+    "debug_page": "public/debug-norfair-bg.html — interactive tile picker, click to get coords + pillar preview",
+    "game_code": "components/samus-run/SamusRunGame.tsx, canvas/drawEnvironment.ts, canvas/drawObstacleShape.ts, constants.ts"
+  }
 }
