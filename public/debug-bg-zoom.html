@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Background Zoom — Candidates</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #ededed; font-family: monospace; padding: 24px; }
+    h1 { font-size: 13px; color: #888; letter-spacing: 0.1em; margin-bottom: 20px; }
+    .section { margin-bottom: 32px; }
+    .section h2 { font-size: 11px; color: #555; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #1a1a1a; }
+    .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+    .card { border: 1px solid #2a2a2a; border-radius: 3px; overflow: hidden; }
+    .card.used { border-color: #3a5a3a; }
+    .card canvas { display: block; width: 100%; height: 240px; image-rendering: pixelated; }
+    .label { padding: 8px 10px; background: #111; }
+    .name { font-size: 13px; color: #ddd; font-weight: bold; }
+    .note { font-size: 11px; color: #666; margin-top: 3px; }
+  </style>
+</head>
+<body>
+  <h1>THEME CANDIDATES — full-width game simulation (1280×240)</h1>
+
+  <div class="section">
+    <h2>Currently in use</h2>
+    <div class="row" id="current"></div>
+  </div>
+  <div class="section">
+    <h2>Top new candidates</h2>
+    <div class="row" id="candidates"></div>
+  </div>
+  <div class="section">
+    <h2>Also available (darker/sparser)</h2>
+    <div class="row" id="others"></div>
+  </div>
+
+  <script>
+    const groups = {
+      current: [
+        { name: 'Cave (wave beam room)', file: '/sprites/norfair-bgs/wave-beam-room.png', note: 'Theme 0 — dark red stalactite cave' },
+        { name: 'Temple (hall before Ridley)', file: '/sprites/norfair-bgs/hall-before-ridley.png', note: 'Theme 1 — purple Chozo idol hall' },
+      ],
+      candidates: [
+        { name: 'Brick Tower', file: '/sprites/norfair-bgs/brick-tower.png', note: 'Green-gray brick architecture — very distinct from existing themes' },
+        { name: 'Flaming Molten Walls', file: '/sprites/norfair-bgs/flaming-molten-walls.png', note: 'Orange dripping flame tendrils — hot palette, very atmospheric' },
+        { name: 'Lava Lower Room (top)', file: '/sprites/norfair-bgs/top-of-lava-lower-room.png', note: 'Dark with bat/creature silhouettes — intense lower Norfair feel' },
+        { name: 'Bubbles (upper Norfair)', file: '/sprites/norfair-bgs/bubbles.png', note: 'Upper Norfair bubble room — green/teal tone, different atmosphere' },
+      ],
+      others: [
+        { name: 'Lower Norfair Entry', file: '/sprites/norfair-bgs/lower-norfair-entry-room.png', note: 'Creature-dense dark room' },
+        { name: 'Flaming Walls', file: '/sprites/norfair-bgs/flaming-walls.png', note: 'Sparse vertical fire streaks' },
+        { name: 'Lava Lower Room (bottom)', file: '/sprites/norfair-bgs/bottom-of-lava-lower-room.png', note: 'Deep lava room — very dark' },
+        { name: 'Molten Walls', file: '/sprites/norfair-bgs/molten-walls.png', note: 'Purple branching molten tendrils' },
+      ],
+    };
+
+    function makeCard(c) {
+      const card = document.createElement('div');
+      card.className = 'card' + (c.used ? ' used' : '');
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280;
+      canvas.height = 240;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      const img = new Image();
+      img.onload = () => {
+        const scale = canvas.height / img.naturalHeight;
+        const drawW = Math.ceil(img.naturalWidth * scale);
+        for (let x = 0; x < canvas.width; x += drawW) {
+          ctx.drawImage(img, x, 0, drawW, canvas.height);
+        }
+        // Lava floor
+        const floorY = canvas.height * 0.85;
+        ctx.fillStyle = 'rgba(61,16,16,0.85)';
+        ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
+        ctx.strokeStyle = '#7a2020';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(canvas.width, floorY); ctx.stroke();
+        // Samus position indicator
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(canvas.width * 0.2 - 15, floorY - 60, 30, 60);
+      };
+      img.src = c.file;
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.innerHTML = `<div class="name">${c.name}</div><div class="note">${c.note}</div>`;
+      card.appendChild(canvas);
+      card.appendChild(label);
+      return card;
+    }
+
+    Object.entries(groups).forEach(([id, items]) => {
+      const container = document.getElementById(id);
+      items.forEach(c => container.appendChild(makeCard(c)));
+    });
+  </script>
+</body>
+</html>

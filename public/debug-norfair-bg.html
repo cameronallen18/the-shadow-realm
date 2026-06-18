@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Norfair Tile Picker</title>
+  <style>
+    body { background: #060408; color: #bbb; font-family: monospace; padding: 16px; margin: 0; }
+    h1 { color: #aa3333; font-size: 15px; margin-bottom: 4px; }
+    h2 { color: #552222; font-size: 12px; margin: 24px 0 6px; border-bottom: 1px solid #1e0a0a; padding-bottom: 3px; }
+    .hint { color: #443333; font-size: 11px; margin-bottom: 16px; line-height: 1.5; }
+    canvas { display: block; image-rendering: pixelated; cursor: crosshair; }
+    #info { font-size: 11px; color: #aa6666; margin-top: 6px; min-height: 16px; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .cell { text-align: center; }
+    .cell-label { font-size: 9px; color: #553333; margin-top: 3px; }
+    .badge { display:inline-block; background:#1a0808; color:#cc5555; border-radius:2px; padding:1px 5px; font-size:11px; font-weight:bold; margin-bottom:3px; }
+  </style>
+</head>
+<body>
+  <h1>Norfair Tile Picker</h1>
+  <p class="hint">
+    Click any tile on the sheet below — the coordinates and a preview will appear.<br>
+    Tell me the <strong style="color:#cc8866">col,row</strong> shown on hover to identify the tile you circled.
+  </p>
+
+  <h2>norfair_upper.png — 4× zoom · click a tile to preview it</h2>
+  <canvas id="sheet" style="border:1px solid #2e1010"></canvas>
+  <div id="info">hover or click a tile…</div>
+
+  <h2>Clicked tile — 8× zoom preview + tiled as pillar (80×320)</h2>
+  <div class="row">
+    <div class="cell">
+      <div class="badge">tile 8×</div>
+      <canvas id="tile-zoom" width="128" height="128"></canvas>
+      <div class="cell-label" id="tile-coords">—</div>
+    </div>
+    <div class="cell">
+      <div class="badge">pillar preview</div>
+      <canvas id="pillar-preview" width="80" height="320"></canvas>
+      <div class="cell-label">30px wide · tiled fill</div>
+    </div>
+  </div>
+
+  <h2>norfair_lower.png — 4× zoom (second sheet)</h2>
+  <canvas id="sheet-lower" style="border:1px solid #2e1010; cursor:crosshair"></canvas>
+  <div id="info-lower">hover or click…</div>
+
+  <script>
+    const TILE = 16;  // native tile size in px
+    const ZOOM = 4;   // display zoom for the sheet
+    const CELL = TILE * ZOOM; // 64px per tile on screen
+
+    function loadImage(src) {
+      return new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.onerror = () => rej(new Error('failed: ' + src));
+        img.src = src;
+      });
+    }
+
+    function drawSheetWithGrid(canvas, img, infoEl) {
+      const cols = Math.floor(img.naturalWidth / TILE);
+      const rows = Math.floor(img.naturalHeight / TILE);
+      canvas.width  = cols * CELL;
+      canvas.height = rows * CELL;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      // Draw image at 4×
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(255,80,80,0.3)';
+      ctx.lineWidth = 0.5;
+      for (let c = 0; c <= cols; c++) {
+        ctx.beginPath(); ctx.moveTo(c * CELL, 0); ctx.lineTo(c * CELL, canvas.height); ctx.stroke();
+      }
+      for (let r = 0; r <= rows; r++) {
+        ctx.beginPath(); ctx.moveTo(0, r * CELL); ctx.lineTo(canvas.width, r * CELL); ctx.stroke();
+      }
+
+      // Col/row labels every 4
+      ctx.fillStyle = 'rgba(255,180,180,0.7)';
+      ctx.font = 'bold 9px monospace';
+      for (let c = 0; c < cols; c += 4) {
+        ctx.fillText(c, c * CELL + 2, 9);
+      }
+      for (let r = 0; r < rows; r += 2) {
+        ctx.fillText(r, 2, r * CELL + 10);
+      }
+
+      return { ctx, cols, rows, img };
+    }
+
+    let upperImg, lowerImg;
+    let upperCtx, lowerCtx;
+    const upperCanvas = document.getElementById('sheet');
+    const lowerCanvas = document.getElementById('sheet-lower');
+
+    function handleSheetInteraction(canvas, img, infoEl, isClick) {
+      return (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
+        const col = Math.floor(mx / CELL);
+        const row = Math.floor(my / CELL);
+        const tx  = col * TILE;
+        const ty  = row * TILE;
+        infoEl.textContent = `col=${col} row=${row}  →  native x=${tx} y=${ty}`;
+
+        if (isClick) {
+          // Zoom preview
+          const zoomCanvas = document.getElementById('tile-zoom');
+          const zctx = zoomCanvas.getContext('2d');
+          zctx.imageSmoothingEnabled = false;
+          zctx.clearRect(0, 0, 128, 128);
+          zctx.drawImage(img, tx, ty, TILE, TILE, 0, 0, 128, 128);
+
+          document.getElementById('tile-coords').textContent =
+            `x=${tx} y=${ty} (col=${col} row=${row})`;
+
+          // Pillar preview
+          const pc = document.getElementById('pillar-preview');
+          const pctx = pc.getContext('2d');
+          pctx.imageSmoothingEnabled = false;
+          const W = pc.width, H = pc.height;
+          const topH = 120, botStart = 200;
+          const colX = 10, colW = 60;
+
+          pctx.fillStyle = '#060408';
+          pctx.fillRect(0, 0, W, H);
+
+          // Match game logic: scale tile to fill pillar width (aspect-ratio preserved), tile vertically
+          function fillPillarCol(dstX, dstY, dstW, dstH) {
+            pctx.save();
+            pctx.beginPath(); pctx.rect(dstX, dstY, dstW, dstH); pctx.clip();
+            const drawH = Math.ceil(TILE * (dstW / TILE)); // scale = dstW/TILE, drawH = TILE*scale
+            for (let ty2 = dstY; ty2 < dstY + dstH; ty2 += drawH) {
+              pctx.drawImage(img, tx, ty, TILE, TILE, dstX, ty2, dstW, drawH);
+            }
+            pctx.restore();
+          }
+
+          fillPillarCol(colX, 0, colW, topH);
+          pctx.fillStyle = '#4a2828';
+          pctx.fillRect(colX, topH - 4, colW, 4);
+
+          fillPillarCol(colX, botStart, colW, H - botStart);
+          pctx.fillStyle = '#4a2828';
+          pctx.fillRect(colX, botStart, colW, 4);
+
+          pctx.fillStyle = 'rgba(255,255,255,0.1)';
+          pctx.font = '8px monospace';
+          pctx.fillText('gap', colX + 18, (topH + botStart) / 2 + 3);
+        }
+      };
+    }
+
+    async function main() {
+      [upperImg, lowerImg] = await Promise.all([
+        loadImage('/sprites/norfair_upper.png'),
+        loadImage('/sprites/norfair_lower.png'),
+      ]);
+
+      drawSheetWithGrid(upperCanvas, upperImg, document.getElementById('info'));
+      upperCanvas.addEventListener('mousemove', handleSheetInteraction(upperCanvas, upperImg, document.getElementById('info'), false));
+      upperCanvas.addEventListener('click',     handleSheetInteraction(upperCanvas, upperImg, document.getElementById('info'), true));
+
+      drawSheetWithGrid(lowerCanvas, lowerImg, document.getElementById('info-lower'));
+      lowerCanvas.addEventListener('mousemove', handleSheetInteraction(lowerCanvas, lowerImg, document.getElementById('info-lower'), false));
+      lowerCanvas.addEventListener('click',     handleSheetInteraction(lowerCanvas, lowerImg, document.getElementById('info-lower'), true));
+    }
+
+    main().catch(console.error);
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Background Preview — Theme Candidates</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a0a; color: #ededed; font-family: monospace; padding: 24px; }
+    h1 { font-size: 14px; color: #888; letter-spacing: 0.1em; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card { border: 1px solid #2a2a2a; border-radius: 4px; overflow: hidden; }
+    .card canvas { display: block; width: 100%; height: 180px; image-rendering: pixelated; }
+    .label { padding: 8px 10px; background: #111; }
+    .label .name { font-size: 12px; color: #ededed; margin-bottom: 2px; }
+    .label .file { font-size: 10px; color: #555; }
+    .currently-used { border-color: #4a8a4a; }
+    .currently-used .label { background: #0d1a0d; }
+    .currently-used .label .name::after { content: ' ✓ (in use)'; color: #4a8a4a; font-size: 10px; }
+    .note { font-size: 10px; color: #888; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>BACKGROUND THEME CANDIDATES — tap to see tiled at game aspect ratio</h1>
+  <div class="grid" id="grid"></div>
+
+  <script>
+    const BG_SCROLL_SPEED = 50;
+
+    const candidates = [
+      { name: 'Cave (wave beam room)', file: '/sprites/norfair-bgs/wave-beam-room.png', inUse: true, note: 'Theme 0 — currently cave theme' },
+      { name: 'Temple (hall before Ridley)', file: '/sprites/norfair-bgs/hall-before-ridley.png', inUse: true, note: 'Theme 1 — currently temple theme' },
+      { name: 'Brick Tower', file: '/sprites/norfair-bgs/brick-tower.png', inUse: false, note: 'Tall brick column room' },
+      { name: 'Bubbles (upper Norfair)', file: '/sprites/norfair-bgs/bubbles.png', inUse: false, note: 'Upper Norfair bubble room' },
+      { name: 'Lava Lower Room (bottom)', file: '/sprites/norfair-bgs/bottom-of-lava-lower-room.png', inUse: false, note: 'Deep lava dive area' },
+      { name: 'Lava Lower Room (top)', file: '/sprites/norfair-bgs/top-of-lava-lower-room.png', inUse: false, note: 'Top of lava dive rooms' },
+      { name: 'Flaming Walls', file: '/sprites/norfair-bgs/flaming-walls.png', inUse: false, note: 'Fire-streaked dark corridor' },
+      { name: 'Flaming Molten Walls', file: '/sprites/norfair-bgs/flaming-molten-walls.png', inUse: false, note: 'Orange flame walls, hot palette' },
+      { name: 'Lower Norfair Entry', file: '/sprites/norfair-bgs/lower-norfair-entry-room.png', inUse: false, note: 'Entry room to lower Norfair' },
+      { name: 'Molten Walls', file: '/sprites/norfair-bgs/molten-walls.png', inUse: false, note: 'Dark molten corridor' },
+      { name: 'Tower', file: '/sprites/norfair-bgs/tower.png', inUse: false, note: 'Vertical tower room' },
+      { name: 'Walls', file: '/sprites/norfair-bgs/walls.png', inUse: false, note: 'Standard Norfair wall tiles' },
+      { name: 'Norfair Upper', file: '/sprites/norfair_upper.png', inUse: false, note: 'Upper Norfair tileset' },
+      { name: 'Norfair Lower', file: '/sprites/norfair_lower.png', inUse: false, note: 'Lower Norfair tileset' },
+    ];
+
+    const grid = document.getElementById('grid');
+
+    candidates.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'card' + (c.inUse ? ' currently-used' : '');
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      const img = new Image();
+      img.onload = () => {
+        // Tile horizontally, scale to fill height
+        const scale = canvas.height / img.naturalHeight;
+        const drawW = Math.ceil(img.naturalWidth * scale);
+        for (let x = 0; x < canvas.width; x += drawW) {
+          ctx.drawImage(img, x, 0, drawW, canvas.height);
+        }
+        // Lava floor — 15% from bottom
+        const floorY = canvas.height * 0.85;
+        ctx.fillStyle = '#3d1010';
+        ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
+        ctx.strokeStyle = '#7a2020';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, floorY); ctx.lineTo(canvas.width, floorY); ctx.stroke();
+      };
+      img.onerror = () => {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#444';
+        ctx.font = '12px monospace';
+        ctx.fillText('load failed: ' + c.file, 8, 90);
+      };
+      img.src = c.file;
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.innerHTML = `<div class="name">${c.name}</div><div class="file">${c.file}</div><div class="note">${c.note}</div>`;
+
+      card.appendChild(canvas);
+      card.appendChild(label);
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
