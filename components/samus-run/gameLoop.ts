@@ -1,4 +1,4 @@
-import { PHYSICS, GAME, OBSTACLE_SPACING_PX, COLLISION } from "./constants";
+import { PHYSICS, GAME, OBSTACLE_SPACING_PX, FIRST_OBSTACLE_LEAD_PX, COLLISION } from "./constants";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ export interface GamePhysicsState {
   samusVY: number;          // CSS px/s, positive = downward
   obstacles: Obstacle[];
   obstaclesCleared: number;
-  obstaclesSpawned: number; // total obstacles created (including initial 2); used for difficulty curve
+  obstaclesSpawned: number; // total obstacles created; used for difficulty curve
   speedMultiplier: number;
   gameOver: boolean;
   pendingJump: boolean;     // set true on first input; consumed by first loop frame
@@ -59,28 +59,43 @@ export function createInitialGameState(
   canvasWidth: number,
   canvasHeight: number
 ): GamePhysicsState {
-  return {
+  const state: GamePhysicsState = {
     samusY: canvasHeight * GAME.floorRatio,
     samusVY: 0,
-    obstacles: [
-      {
-        x: canvasWidth + 100,
-        ...gapForObstacle(1, canvasHeight),
-        scored: false,
-      },
-      {
-        x: canvasWidth + 100 + OBSTACLE_SPACING_PX,
-        ...gapForObstacle(2, canvasHeight),
-        scored: false,
-      },
-    ],
+    obstacles: [],
     obstaclesCleared: 0,
-    obstaclesSpawned: 2,
+    obstaclesSpawned: 0,
     speedMultiplier: 1,
     gameOver: false,
     pendingJump: false,
     pendingScrewAttack: false,
   };
+
+  // First pillar sits a fixed distance ahead of Samus (not off the right edge),
+  // so wide screens don't start with several seconds of empty runway.
+  const samusX = canvasWidth * GAME.samusXRatio;
+  spawnObstacle(state, samusX + FIRST_OBSTACLE_LEAD_PX, canvasHeight);
+  fillObstaclesAhead(state, canvasWidth, canvasHeight);
+  return state;
+}
+
+function spawnObstacle(state: GamePhysicsState, x: number, canvasHeight: number): void {
+  state.obstaclesSpawned++;
+  state.obstacles.push({ x, ...gapForObstacle(state.obstaclesSpawned, canvasHeight), scored: false });
+}
+
+/**
+ * Keep spawning pillars until the rightmost one is past the right edge.
+ * New pillars therefore always appear off-screen and scroll in, at any screen
+ * width (previously only 2 pillars existed, so on screens wider than ~960px
+ * recycled pillars popped into view mid-screen).
+ */
+function fillObstaclesAhead(state: GamePhysicsState, canvasWidth: number, canvasHeight: number): void {
+  let rightmost = state.obstacles[state.obstacles.length - 1];
+  while (rightmost && rightmost.x < canvasWidth) {
+    spawnObstacle(state, rightmost.x + OBSTACLE_SPACING_PX, canvasHeight);
+    rightmost = state.obstacles[state.obstacles.length - 1];
+  }
 }
 
 // ── Update ─────────────────────────────────────────────────────────────────
@@ -158,26 +173,13 @@ export function updateGame(
     }
   }
 
-  // g. Obstacle scrolling
+  // g. Obstacle scrolling — drop pillars that have left the screen, then top up on the right
   const speed = PHYSICS.baseScrollSpeed * state.speedMultiplier;
   for (const obs of state.obstacles) {
     obs.x -= speed * dt;
-
-    if (obs.x + GAME.obstacleWidth < 0) {
-      // Recycle obstacle to the right — place it OBSTACLE_SPACING_PX ahead of
-      // the furthest obstacle still on screen so spacing stays consistent.
-      const otherObs = state.obstacles.find((o) => o !== obs);
-      const leadX = otherObs ? otherObs.x : canvasWidth;
-      obs.x = leadX + OBSTACLE_SPACING_PX;
-      state.obstaclesSpawned++;
-      const gap = gapForObstacle(state.obstaclesSpawned, canvasHeight);
-      obs.gapTop = gap.gapTop;
-      obs.gapBottom = gap.gapBottom;
-      obs.scored = false;
-      // NOTE: obstaclesCleared is incremented in the scoring block above (when Samus passes),
-      // not here on recycle — prevents double-counting and aligns score with player action.
-    }
   }
+  state.obstacles = state.obstacles.filter((o) => o.x + GAME.obstacleWidth >= 0);
+  fillObstaclesAhead(state, canvasWidth, canvasHeight);
 }
 
 // ── Jump ───────────────────────────────────────────────────────────────────

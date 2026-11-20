@@ -49,6 +49,10 @@ export const PHYSICS = {
 // Wide screens see more of the level ahead rather than larger gaps.
 export const OBSTACLE_SPACING_PX = 480;
 
+// Distance from Samus to the first pillar at game start. Fixed px so every
+// screen width gets the same lead-in time (~1.9s at base speed).
+export const FIRST_OBSTACLE_LEAD_PX = 420;
+
 // Collision hitbox — reduced to ~65% of sprite size per D-04 (60-70% range)
 export const COLLISION = {
   hitboxScale: 0.65,   // 65% of sprite size per D-04 (~60-70% range)

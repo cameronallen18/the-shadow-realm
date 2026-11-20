@@ -117,6 +117,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 260501-ayo | Fix idle animation regression in SamusRunGame.tsx | 2026-05-01 | 27e424c | [260501-ayo-fix-idle-animation-regression-in-samusru](./quick/260501-ayo-fix-idle-animation-regression-in-samusru/) |
 | 260502-4ha | Fix samus-run: banner bleed, gap curve, spinJump, narrow pillars, anim switch at gap 15 | 2026-05-02 | d055d77 | [260502-4ha-fix-samus-run-game-5-changes-all-verifie](./quick/260502-4ha-fix-samus-run-game-5-changes-all-verifie/) |
+| 261120-spn | Fix samus-run: pillars spawn off-screen at any width, gameover shows death frame | 2026-11-20 | (branch fix/samus-run-spawn-and-gameover) | [261120-spn-fix-samus-run-pillar-spawn-and-gameover-frame](./quick/261120-spn-fix-samus-run-pillar-spawn-and-gameover-frame/) |
 
 ## Session Continuity
 

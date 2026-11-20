@@ -119,6 +119,14 @@ export default function SamusRunGame() {
   // Parallax scroll position — accumulated in the game loop, wraps per drawBackground.
   const bgScrollOffsetRef = useRef(0);
 
+  // Snapshot of the last frame drawn by the game loop (anim pose, bg scroll, theme).
+  // Effect A redraws it on the gameover screen so the player sees how they died.
+  const lastFrameRef = useRef<{
+    animState: { frame: number; accumulator: number; isScrewAttack: boolean; useLateJump?: boolean };
+    bgOffset: number;
+    themeIndex: number;
+  } | null>(null);
+
   // Triggers Effect A re-render once sprite finishes loading on the idle screen.
   const [spritesLoaded, setSpritesLoaded] = useState(false);
 
@@ -127,7 +135,9 @@ export default function SamusRunGame() {
     screenRef.current = state.screen;
   }, [state.screen]);
 
-  // Effect A: static render for idle and gameover states — Samus stands still
+  // Effect A: static render for idle and gameover states.
+  // Idle: Samus stands still next to a demo pillar.
+  // Gameover: the frozen final frame of the run (pillars + Samus where she died).
   useEffect(() => {
     if (state.screen === "playing") return;
 
@@ -144,6 +154,18 @@ export default function SamusRunGame() {
       const rect = cvs.getBoundingClientRect();
       canvasWidthRef.current = rect.width;
       canvasHeightRef.current = rect.height;
+
+      const last = lastFrameRef.current;
+      if (state.screen === "gameover" && gameRef.current && last) {
+        const isCave = last.themeIndex === 0;
+        drawScene(
+          ctx, "playing", rect.width, rect.height, gameRef.current, spritesRef.current, last.animState,
+          isCave ? bgCaveRef.current : bgTempleRef.current, last.bgOffset,
+          isCave ? pillarCaveRef.current : pillarTempleRef.current,
+        );
+        return;
+      }
+
       drawScene(ctx, state.screen, rect.width, rect.height, undefined, spritesRef.current, staticAnimState, bgCaveRef.current, 0, pillarCaveRef.current);
     }
 
@@ -254,7 +276,11 @@ export default function SamusRunGame() {
         animState.frame = (animState.frame + 1) % section.frames;
       }
 
-      // WR-03 fix: check game over BEFORE drawing the final frame
+      // Remember this frame's pose/scroll/theme so the gameover screen can redraw it.
+      lastFrameRef.current = { animState: { ...animState }, bgOffset: bgScrollOffsetRef.current, themeIndex };
+
+      // WR-03: stop the loop on game over; Effect A then draws the frozen death
+      // frame (from gameRef + lastFrameRef) underneath the gameover overlay.
       if (game.gameOver) {
         audioRef.current?.playDeath();
         dispatch({ type: "GAME_OVER", score: game.obstaclesCleared });
@@ -419,7 +445,7 @@ export default function SamusRunGame() {
 
       {/* Overlay: game over */}
       {state.screen === "gameover" && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 bg-black/50">
           <p className="text-[#ededed] text-sm">game over</p>
           <p className="text-[#9ba3ad] text-xs font-mono tabular-nums">{state.score}</p>
           {state.score > 0 && state.score >= state.highScore && (
